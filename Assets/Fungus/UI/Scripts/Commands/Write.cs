@@ -1,62 +1,70 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using UnityEngine.UI;
-using System;
-using System.Collections;
-using UnityEngine.Serialization;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Text coloring mode for Write command.
+    /// </summary>
+    public enum TextColor
+    {
+        /// <summary> Don't change the text color. </summary>
+        Default,
+        /// <summary> Set the text alpha to 1. </summary>
+        SetVisible,
+        /// <summary> Set the text alpha to a value. </summary>
+        SetAlpha,
+        /// <summary> Set the text color to a value. </summary>
+        SetColor
+    }
+
+    /// <summary>
+    /// Writes content to a UI Text or Text Mesh object.
+    /// </summary>
     [CommandInfo("UI", 
                  "Write", 
                  "Writes content to a UI Text or Text Mesh object.")]
-
     [AddComponentMenu("")]
     public class Write : Command, ILocalizable
     {
         [Tooltip("Text object to set text on. Text, Input Field and Text Mesh objects are supported.")]
-        public GameObject textObject;
+        [SerializeField] protected GameObject textObject;
 
         [Tooltip("String value to assign to the text object")]
-        public StringDataMulti text;
+        [SerializeField] protected StringDataMulti text;
 
         [Tooltip("Notes about this story text for other authors, localization, etc.")]
-        public string description;
+        [SerializeField] protected string description;
 
         [Tooltip("Clear existing text before writing new text")]
-        public bool clearText = true;
+        [SerializeField] protected bool clearText = true;
 
         [Tooltip("Wait until this command finishes before executing the next command")]
-        public bool waitUntilFinished = true;
+        [SerializeField] protected bool waitUntilFinished = true;
 
-        public enum TextColor
-        {
-            Default,
-            SetVisible,
-            SetAlpha,
-            SetColor
-        }
+        [Tooltip("Color mode to apply to the text.")]
+        [SerializeField] protected TextColor textColor = TextColor.Default;
 
-        public TextColor textColor = TextColor.Default;
+        [Tooltip("Alpha to apply to the text.")]
+        [SerializeField] protected FloatData setAlpha = new FloatData(1f);
 
-        public FloatData setAlpha = new FloatData(1f);
-
-        public ColorData setColor = new ColorData(Color.white);
+        [Tooltip("Color to apply to the text.")]
+        [SerializeField] protected ColorData setColor = new ColorData(Color.white);
 
         protected Writer GetWriter()
         {
-            Writer writer = textObject.GetComponent<Writer>();
+            var writer = textObject.GetComponent<Writer>();
             if (writer == null)
             {
-                writer = textObject.AddComponent<Writer>() as Writer;
+                writer = textObject.AddComponent<Writer>();
             }
             
             return writer;
         }
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -66,7 +74,7 @@ namespace Fungus
                 return;
             }
         
-            Writer writer = GetWriter();
+            var writer = GetWriter();
             if (writer == null)
             {
                 Continue();
@@ -86,7 +94,7 @@ namespace Fungus
                 break;
             }
 
-            Flowchart flowchart = GetFlowchart();
+            var flowchart = GetFlowchart();
             string newText = flowchart.SubstituteVariables(text.Value);
 
             if (!waitUntilFinished)
@@ -122,9 +130,9 @@ namespace Fungus
             GetWriter().Stop();
         }
 
-        //
-        // ILocalizable implementation
-        //
+        #endregion
+
+        #region ILocalizable implementation
 
         public virtual string GetStandardText()
         {
@@ -146,6 +154,7 @@ namespace Fungus
             // String id for Write commands is WRITE.<Localization Id>.<Command id>
             return "WRITE." + GetFlowchartLocalizationId() + "." + itemId;
         }
-    }
 
+        #endregion
+    }
 }

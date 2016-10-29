@@ -1,16 +1,15 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System.Collections;
 
 namespace Fungus
 {
-    // This command is called "Call Method" because a) it's more descriptive than Send Message and we're already have
-    // a Send Message command for sending messages to trigger block execution.
-
+    /// <summary>
+    /// Calls a named method on a GameObject using the GameObject.SendMessage() system.
+    /// This command is called "Call Method" because a) it's more descriptive than Send Message and we're already have
+    /// a Send Message command for sending messages to trigger block execution.
+    /// </summary>
     [CommandInfo("Scripting", 
                  "Call Method", 
                  "Calls a named method on a GameObject using the GameObject.SendMessage() system.")]
@@ -18,13 +17,20 @@ namespace Fungus
     public class CallMethod : Command
     {
         [Tooltip("Target monobehavior which contains the method we want to call")]
-        public GameObject targetObject;
+        [SerializeField] protected GameObject targetObject;
 
         [Tooltip("Name of the method to call")]
-        public string methodName = "";
+        [SerializeField] protected string methodName = "";
 
         [Tooltip("Delay (in seconds) before the method will be called")]
-        public float delay;
+        [SerializeField] protected float delay;
+
+        protected virtual void CallTheMethod()
+        {
+            targetObject.SendMessage(methodName, SendMessageOptions.DontRequireReceiver);
+        }
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -35,7 +41,7 @@ namespace Fungus
                 return;
             }
 
-            if (delay == 0f)
+            if (Mathf.Approximately(delay, 0f))
             {
                 CallTheMethod();
             }
@@ -45,11 +51,6 @@ namespace Fungus
             }
 
             Continue();
-        }
-
-        protected virtual void CallTheMethod()
-        {
-            targetObject.SendMessage(methodName, SendMessageOptions.DontRequireReceiver);
         }
 
         public override string GetSummary()
@@ -71,6 +72,7 @@ namespace Fungus
         {
             return new Color32(235, 191, 217, 255);
         }
-    }
 
+        #endregion
+    }
 }

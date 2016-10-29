@@ -1,16 +1,12 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using Rotorz.ReorderableList;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
 
     [CustomEditor (typeof(Command), true)]
@@ -41,7 +37,7 @@ namespace Fungus
                 return;
             }
 
-            Flowchart flowchart = t.GetFlowchart();
+            var flowchart = (Flowchart)t.GetFlowchart();
             if (flowchart == null)
             {
                 return;
@@ -57,7 +53,7 @@ namespace Fungus
 
             if (t.enabled)
             {
-                if (flowchart.colorCommands)
+                if (flowchart.ColorCommands)
                 {
                     GUI.backgroundColor = t.GetButtonColor();
                 }
@@ -77,7 +73,7 @@ namespace Fungus
 
             GUILayout.FlexibleSpace();
 
-            GUILayout.Label(new GUIContent("(" + t.itemId + ")"));
+            GUILayout.Label(new GUIContent("(" + t.ItemId + ")"));
 
             GUILayout.Space(10);
 
@@ -100,11 +96,11 @@ namespace Fungus
 
             EditorGUILayout.Separator();
 
-            if (t.errorMessage.Length > 0)
+            if (t.ErrorMessage.Length > 0)
             {
                 GUIStyle style = new GUIStyle(GUI.skin.label);
                 style.normal.textColor = new Color(1,0,0);
-                EditorGUILayout.LabelField(new GUIContent("Error: " + t.errorMessage), style);
+                EditorGUILayout.LabelField(new GUIContent("Error: " + t.ErrorMessage), style);
             }
 
             GUILayout.EndVertical();
@@ -160,7 +156,7 @@ namespace Fungus
         }
 
         
-        static public void ObjectField<T>(SerializedProperty property, GUIContent label, GUIContent nullLabel, List<T> objectList) where T : Object 
+        public static void ObjectField<T>(SerializedProperty property, GUIContent label, GUIContent nullLabel, List<T> objectList) where T : Object 
         {
             if (property == null)
             {
@@ -171,25 +167,36 @@ namespace Fungus
 
             T selectedObject = property.objectReferenceValue as T;
 
-            int selectedIndex = 0;
+            int selectedIndex = -1; // Invalid index
+
+            // First option in list is <None>
             objectNames.Add(nullLabel);
+            if (selectedObject == null)
+            {
+                selectedIndex = 0;
+            }
+
             for (int i = 0; i < objectList.Count; ++i)
             {
                 if (objectList[i] == null) continue;
                 objectNames.Add(new GUIContent(objectList[i].name));
-                
-                
+
                 if (selectedObject == objectList[i])
                 {
                     selectedIndex = i + 1;
                 }
-                
             }
 
             T result;
             
             selectedIndex = EditorGUILayout.Popup(label, selectedIndex, objectNames.ToArray());
-            if (selectedIndex == 0)
+
+            if (selectedIndex == -1)
+            {
+                // Currently selected object is not in list, but nothing else was selected so no change.
+                return;
+            }
+            else if (selectedIndex == 0)
             {
                 result = null; // Null option
             }
@@ -200,16 +207,13 @@ namespace Fungus
 
             property.objectReferenceValue = result;
         }
-        
 
-        /**
-         * When modifying custom editor code you can occasionally end up with orphaned editor instances.
-         * When this happens, you'll get a null exception error every time the scene serializes / deserialized.
-         * Once this situation occurs, the only way to fix it is to restart the Unity editor.
-         * 
-         * As a workaround, this function detects if this command editor is an orphan and deletes it. 
-         * To use it, just call this function at the top of the OnEnable() method in your custom editor.
-         */
+        // When modifying custom editor code you can occasionally end up with orphaned editor instances.
+        // When this happens, you'll get a null exception error every time the scene serializes / deserialized.
+        // Once this situation occurs, the only way to fix it is to restart the Unity editor.
+        // 
+        // As a workaround, this function detects if this command editor is an orphan and deletes it. 
+        // To use it, just call this function at the top of the OnEnable() method in your custom editor.
         protected virtual bool NullTargetCheck()
         {
             try

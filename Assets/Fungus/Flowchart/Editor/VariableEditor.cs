@@ -1,17 +1,13 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
     [CustomEditor (typeof(Variable), true)]
     public class VariableEditor : CommandEditor
@@ -37,7 +33,7 @@ namespace Fungus
             return null;
         }
 
-        static public void VariableField(SerializedProperty property, 
+        public static void VariableField(SerializedProperty property, 
                                          GUIContent label, 
                                          Flowchart flowchart,
                                          string defaultText,
@@ -50,7 +46,7 @@ namespace Fungus
             variableKeys.Add(defaultText);
             variableObjects.Add(null);
             
-            List<Variable> variables = flowchart.variables;
+            List<Variable> variables = flowchart.Variables;
             int index = 0;
             int selectedIndex = 0;
 
@@ -63,7 +59,7 @@ namespace Fungus
             // occurs we just skip displaying the property for this frame.
             if (selectedVariable != null &&
                 selectedVariable.gameObject != flowchart.gameObject &&
-                selectedVariable.scope == VariableScope.Private)
+                selectedVariable.Scope == VariableScope.Private)
             {
                 property.objectReferenceValue = null;
                 return;
@@ -79,7 +75,7 @@ namespace Fungus
                     }
                 }
                 
-                variableKeys.Add(v.key);
+                variableKeys.Add(v.Key);
                 variableObjects.Add(v);
                 
                 index++;
@@ -109,7 +105,7 @@ namespace Fungus
                         }
                     }
 
-                    variableKeys.Add(fs.name + " / " + v.key);
+                    variableKeys.Add(fs.name + " / " + v.Key);
                     variableObjects.Add(v);
 
                     index++;
@@ -207,7 +203,7 @@ namespace Fungus
                 return;
             }
 
-            Flowchart flowchart = command.GetFlowchart() as Flowchart;
+            var flowchart = command.GetFlowchart() as Flowchart;
             if (flowchart == null)
             {
                 return;

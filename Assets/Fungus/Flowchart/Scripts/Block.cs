@@ -1,7 +1,5 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -11,63 +9,53 @@ using System.Collections.Generic;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Execution state of a Block.
+    /// </summary>
+    public enum ExecutionState
+    {
+        /// <summary> No command executing </summary>
+        Idle,       
+        /// <summary> Executing a command </summary>
+        Executing,
+    }
+
+    /// <summary>
+    /// A container for a sequence of Fungus comands.
+    /// </summary>
     [ExecuteInEditMode]
     [RequireComponent(typeof(Flowchart))]
     [AddComponentMenu("")]
-    public class Block : Node 
+    public class Block : Node
     {
-        public enum ExecutionState
-        {
-            Idle,
-            Executing,
-        }
-
-        [NonSerialized]
-        public ExecutionState executionState;
-
-        [HideInInspector]
-        public int itemId = -1; // Invalid flowchart item id
+        [SerializeField] protected int itemId = -1; // Invalid flowchart item id
 
         [FormerlySerializedAs("sequenceName")]
         [Tooltip("The name of the block node as displayed in the Flowchart window")]
-        public string blockName = "New Block";
+        [SerializeField] protected string blockName = "New Block";
 
         [TextArea(2, 5)]
         [Tooltip("Description text to display under the block node")]
-        public string description = "";
+        [SerializeField] protected string description = "";
 
         [Tooltip("An optional Event Handler which can execute the block when an event occurs")]
-        public EventHandler eventHandler;
+        [SerializeField] protected EventHandler eventHandler;
 
-        [HideInInspector]
-        [System.NonSerialized]
-        public Command activeCommand;
+        [SerializeField] protected List<Command> commandList = new List<Command>();
 
-        // Index of last command executed before the current one
-        // -1 indicates no previous command
-        [HideInInspector]
-        [System.NonSerialized]
-        public int previousActiveCommandIndex = -1;
+        protected ExecutionState executionState;
 
-        [HideInInspector]
-        [System.NonSerialized]
-        public float executingIconTimer;
+        protected Command activeCommand;
 
-        [HideInInspector]
-        public List<Command> commandList = new List<Command>();
+        /// <summary>
+        // Index of last command executed before the current one.
+        // -1 indicates no previous command.
+        /// </summary>
+        protected int previousActiveCommandIndex = -1;
+
+        protected int jumpToCommandIndex = -1;
 
         protected int executionCount;
-
-        /**
-         * Duration of fade for executing icon displayed beside blocks & commands.
-         */
-        public const float executingIconFadeTime = 0.5f;
-
-        /**
-         * Controls the next command to execute in the block execution coroutine.
-         */
-        [NonSerialized]
-        public int jumpToCommandIndex = -1;
 
         protected bool executionInfoSet = false;
 
@@ -76,20 +64,23 @@ namespace Fungus
             SetExecutionInfo();
         }
 
+        /// <summary>
+        /// Populate the command metadata used to control execution.
+        /// </summary>
         protected virtual void SetExecutionInfo()
         {
             // Give each child command a reference back to its parent block
             // and tell each command its index in the list.
             int index = 0;
-            foreach (Command command in commandList)
+            for (int i = 0; i < commandList.Count; i++)
             {
+                var command = commandList[i];
                 if (command == null)
                 {
                     continue;
                 }
-
-                command.parentBlock = this;
-                command.commandIndex = index++;
+                command.ParentBlock = this;
+                command.CommandIndex = index++;
             }
 
             // Ensure all commands are at their correct indent level
@@ -104,44 +95,89 @@ namespace Fungus
         // The user can modify the command list order while playing in the editor,
         // so we keep the command indices updated every frame. There's no need to
         // do this in player builds so we compile this bit out for those builds.
-        void Update()
+        protected virtual void Update()
         {
             int index = 0;
-            foreach (Command command in commandList)
+            for (int i = 0; i < commandList.Count; i++)
             {
-                if (command == null) // Null entry will be deleted automatically later
+                var command = commandList[i];
+                if (command == null)// Null entry will be deleted automatically later
+                
                 {
                     continue;
                 }
-
-                command.commandIndex = index++;
+                command.CommandIndex = index++;
             }
         }
 #endif
 
+        #region Public members
+
+        /// <summary>
+        /// The execution state of the Block.
+        /// </summary>
+        public virtual ExecutionState State { get { return executionState; } }
+
+        /// <summary>
+        /// Unique identifier for the Block.
+        /// </summary>
+        public virtual int ItemId { get { return itemId; } set { itemId = value; } }
+
+        /// <summary>
+        /// The name of the block node as displayed in the Flowchart window.
+        /// </summary>
+        public virtual string BlockName { get { return blockName; } set { blockName = value; } }
+
+        /// <summary>
+        /// Description text to display under the block node
+        /// </summary>
+        public virtual string Description { get { return description; } }
+
+        /// <summary>
+        /// An optional Event Handler which can execute the block when an event occurs.
+        /// Note: Using the concrete class instead of the interface here because of weird editor behaviour.
+        /// </summary>
+        public virtual EventHandler _EventHandler { get { return eventHandler; } set { eventHandler = value; } }
+
+        /// <summary>
+        /// The currently executing command.
+        /// </summary>
+        public virtual Command ActiveCommand { get { return activeCommand; } }
+
+        /// <summary>
+        /// Timer for fading Block execution icon.
+        /// </summary>
+        public virtual float ExecutingIconTimer { get; set; }
+
+        /// <summary>
+        /// The list of commands in the sequence.
+        /// </summary>
+        public virtual List<Command> CommandList { get { return commandList; } }
+
+        /// <summary>
+        /// Controls the next command to execute in the block execution coroutine.
+        /// </summary>
+        public virtual int JumpToCommandIndex { set { jumpToCommandIndex = value; } }
+
+        /// <summary>
+        /// Returns the parent Flowchart for this Block.
+        /// </summary>
         public virtual Flowchart GetFlowchart()
         {
             return GetComponent<Flowchart>();
         }
 
-        public virtual bool HasError()
-        {
-            foreach (Command command in commandList)
-            {
-                if (command.errorMessage.Length > 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
+        /// <summary>
+        /// Returns true if the Block is executing a command.
+        /// </summary>
         public virtual bool IsExecuting()
         {
             return (executionState == ExecutionState.Executing);
         }
 
+        /// <summary>
+        /// Returns the number of times this Block has executed.
+        /// </summary>
         public virtual int GetExecutionCount()
         {
             return executionCount;
@@ -174,12 +210,13 @@ namespace Fungus
 
             executionCount++;
 
-            Flowchart flowchart = GetFlowchart();
+            var flowchart = GetFlowchart();
             executionState = ExecutionState.Executing;
+            BlockSignals.DoBlockStart(this);
 
             #if UNITY_EDITOR
             // Select the executing block & the first command
-            flowchart.selectedBlock = this;
+            flowchart.SelectedBlock = this;
             if (commandList.Count > 0)
             {
                 flowchart.ClearSelectedCommands();
@@ -201,11 +238,11 @@ namespace Fungus
 
                 // Skip disabled commands, comments and labels
                 while (i < commandList.Count &&
-                       (!commandList[i].enabled || 
+                      (!commandList[i].enabled || 
                         commandList[i].GetType() == typeof(Comment) ||
                         commandList[i].GetType() == typeof(Label)))
                 {
-                    i = commandList[i].commandIndex + 1;
+                    i = commandList[i].CommandIndex + 1;
                 }
 
                 if (i >= commandList.Count)
@@ -220,27 +257,28 @@ namespace Fungus
                 }
                 else
                 {
-                    previousActiveCommandIndex = activeCommand.commandIndex;
+                    previousActiveCommandIndex = activeCommand.CommandIndex;
                 }
 
-                Command command = commandList[i];
+                var command = commandList[i];
                 activeCommand = command;
 
-                if (flowchart.gameObject.activeInHierarchy)
+                if (flowchart.IsActive())
                 {
                     // Auto select a command in some situations
-                    if ((flowchart.selectedCommands.Count == 0 && i == 0) ||
-                        (flowchart.selectedCommands.Count == 1 && flowchart.selectedCommands[0].commandIndex == previousActiveCommandIndex))
+                    if ((flowchart.SelectedCommands.Count == 0 && i == 0) ||
+                        (flowchart.SelectedCommands.Count == 1 && flowchart.SelectedCommands[0].CommandIndex == previousActiveCommandIndex))
                     {
                         flowchart.ClearSelectedCommands();
                         flowchart.AddSelectedCommand(commandList[i]);
                     }
                 }
 
-                command.isExecuting = true;
+                command.IsExecuting = true;
                 // This icon timer is managed by the FlowchartWindow class, but we also need to
                 // set it here in case a command starts and finishes execution before the next window update.
-                command.executingIconTimer = Time.realtimeSinceStartup + executingIconFadeTime;
+                command.ExecutingIconTimer = Time.realtimeSinceStartup + FungusConstants.ExecutingIconFadeTime;
+                BlockSignals.DoCommandExecute(this, command, i, commandList.Count);
                 command.Execute();
 
                 // Wait until the executing command sets another command to jump to via Command.Continue()
@@ -250,17 +288,18 @@ namespace Fungus
                 }
 
                 #if UNITY_EDITOR
-                if (flowchart.stepPause > 0f)
+                if (flowchart.StepPause > 0f)
                 {
-                    yield return new WaitForSeconds(flowchart.stepPause);
+                    yield return new WaitForSeconds(flowchart.StepPause);
                 }
                 #endif
 
-                command.isExecuting = false;
+                command.IsExecuting = false;
             }
 
             executionState = ExecutionState.Idle;
             activeCommand = null;
+            BlockSignals.DoBlockEnd(this);
 
             if (onComplete != null)
             {
@@ -268,12 +307,15 @@ namespace Fungus
             }
         }
 
+        /// <summary>
+        /// Stop executing commands in this Block.
+        /// </summary>
         public virtual void Stop()
         {
             // Tell the executing command to stop immediately
             if (activeCommand != null)
             {
-                activeCommand.isExecuting = false;
+                activeCommand.IsExecuting = false;
                 activeCommand.OnStopExecuting();
             }
 
@@ -281,11 +323,15 @@ namespace Fungus
             jumpToCommandIndex = int.MaxValue;
         }
 
+        /// <summary>
+        /// Returns a list of all Blocks connected to this one.
+        /// </summary>
         public virtual List<Block> GetConnectedBlocks()
         {
-            List<Block> connectedBlocks = new List<Block>();
-            foreach (Command command in commandList)
+            var connectedBlocks = new List<Block>();
+            for (int i = 0; i < commandList.Count; i++)
             {
+                var command = commandList[i];
                 if (command != null)
                 {
                     command.GetConnectedBlocks(ref connectedBlocks);
@@ -294,6 +340,10 @@ namespace Fungus
             return connectedBlocks;
         }
 
+        /// <summary>
+        /// Returns the type of the previously executing command.
+        /// </summary>
+        /// <returns>The previous active command type.</returns>
         public virtual System.Type GetPreviousActiveCommandType()
         {
             if (previousActiveCommandIndex >= 0 &&
@@ -305,31 +355,33 @@ namespace Fungus
             return null;
         }
 
+        /// <summary>
+        /// Recalculate the indent levels for all commands in the list.
+        /// </summary>
         public virtual void UpdateIndentLevels()
         {
             int indentLevel = 0;
-            foreach(Command command in commandList)
+            for (int i = 0; i < commandList.Count; i++)
             {
+                var command = commandList[i];
                 if (command == null)
                 {
                     continue;
                 }
-
                 if (command.CloseBlock())
                 {
                     indentLevel--;
                 }
-
                 // Negative indent level is not permitted
                 indentLevel = Math.Max(indentLevel, 0);
-
-                command.indentLevel = indentLevel;
-
+                command.IndentLevel = indentLevel;
                 if (command.OpenBlock())
                 {
                     indentLevel++;
                 }
             }
         }
+
+        #endregion
     }
 }

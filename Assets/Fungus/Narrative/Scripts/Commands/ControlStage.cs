@@ -1,48 +1,118 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Supported display operations for Stage.
+    /// </summary>
     public enum StageDisplayType
     {
+        /// <summary> No operation </summary>
         None,
+        /// <summary> Show the stage and all portraits. </summary>
         Show,
+        /// <summary> Hide the stage and all portraits. </summary>
         Hide,
+        /// <summary> Swap the stage and all portraits with another stage. </summary>
         Swap,
+        /// <summary> Move stage to the front. </summary>
         MoveToFront,
+        /// <summary> Undim all portraits on the stage. </summary>
         UndimAllPortraits,
+        /// <summary> Dim all non-speaking portraits on the stage. </summary>
         DimNonSpeakingPortraits
     }
 
+    /// <summary>
+    /// Controls the stage on which character portraits are displayed.
+    /// </summary>
     [CommandInfo("Narrative", 
                  "Control Stage",
                  "Controls the stage on which character portraits are displayed.")]
     public class ControlStage : ControlWithDisplay<StageDisplayType> 
     {
         [Tooltip("Stage to display characters on")]
-        public Stage stage;
+        [SerializeField] protected Stage stage;
+        public virtual Stage _Stage { get { return stage; } }
 
         [Tooltip("Stage to swap with")]
-        public Stage replacedStage;
+        [SerializeField] protected Stage replacedStage;
 
         [Tooltip("Use Default Settings")]
-        public bool useDefaultSettings = true;
+        [SerializeField] protected bool useDefaultSettings = true;
+        public virtual bool UseDefaultSettings { get { return useDefaultSettings; } }
 
         [Tooltip("Fade Duration")]
-        public float fadeDuration;
+        [SerializeField] protected float fadeDuration;
         
         [Tooltip("Wait until the tween has finished before executing the next command")]
-        public bool waitUntilFinished = false;
-        
+        [SerializeField] protected bool waitUntilFinished = false;
+
+        protected virtual void Show(Stage stage, bool visible) 
+        {
+            float duration = (fadeDuration == 0) ? float.Epsilon : fadeDuration;
+            float targetAlpha = visible ? 1f : 0f;
+
+            CanvasGroup canvasGroup = stage.GetComponentInChildren<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                Continue();
+                return;
+            }
+
+            LeanTween.value(canvasGroup.gameObject, canvasGroup.alpha, targetAlpha, duration).setOnUpdate( (float alpha) => {
+                canvasGroup.alpha = alpha;
+            }).setOnComplete( () => {
+                OnComplete();
+            });
+        }
+
+        protected virtual void MoveToFront(Stage stage)
+        {
+            var activeStages = Stage.ActiveStages;
+            for (int i = 0; i < activeStages.Count; i++)
+            {
+                var s = activeStages[i];
+                if (s == stage)
+                {
+                    s.PortraitCanvas.sortingOrder = 1;
+                }
+                else
+                {
+                    s.PortraitCanvas.sortingOrder = 0;
+                }
+            }
+        }
+
+        protected virtual void UndimAllPortraits(Stage stage) 
+        {
+            stage.DimPortraits = false;
+            var charactersOnStage = stage.CharactersOnStage;
+            for (int i = 0; i < charactersOnStage.Count; i++)
+            {
+                var character = charactersOnStage[i];
+                stage.SetDimmed(character, false);
+            }
+        }
+
+        protected virtual void DimNonSpeakingPortraits(Stage stage) 
+        {
+            stage.DimPortraits = true;
+        }
+
+        protected virtual void OnComplete() 
+        {
+            if (waitUntilFinished)
+            {
+                Continue();
+            }
+        }
+
+        #region Public members
+
         public override void OnEnter()
         {
             // If no display specified, do nothing
@@ -83,7 +153,7 @@ namespace Fungus
             // Use default settings
             if (useDefaultSettings)
             {
-                fadeDuration = stage.fadeDuration;
+                fadeDuration = stage.FadeDuration;
             }
             switch(display)
             {
@@ -109,62 +179,6 @@ namespace Fungus
             }
 
             if (!waitUntilFinished)
-            {
-                Continue();
-            }
-        }
-
-        protected void Show(Stage stage, bool visible) 
-        {
-            float duration = (fadeDuration == 0) ? float.Epsilon : fadeDuration;
-            float targetAlpha = visible ? 1f : 0f;
-
-            CanvasGroup canvasGroup = stage.GetComponentInChildren<CanvasGroup>();
-            if (canvasGroup == null)
-            {
-                Continue();
-                return;
-            }
-            
-            LeanTween.value(canvasGroup.gameObject, canvasGroup.alpha, targetAlpha, duration).setOnUpdate( (float alpha) => {
-                canvasGroup.alpha = alpha;
-            }).setOnComplete( () => {
-                OnComplete();
-            });
-        }
-
-        protected void MoveToFront(Stage stage)
-        {
-            foreach (Stage s in Stage.activeStages)
-            {
-                if (s == stage)
-                {
-                    s.portraitCanvas.sortingOrder = 1;
-                }
-                else
-                {
-                    s.portraitCanvas.sortingOrder = 0;
-                }
-            }
-        }
-
-        protected void UndimAllPortraits(Stage stage) 
-        {
-            stage.dimPortraits = false;
-            foreach (Character character in stage.charactersOnStage)
-            {
-                stage.SetDimmed(character, false);
-            }
-        }
-
-        protected void DimNonSpeakingPortraits(Stage stage) 
-        {
-            stage.dimPortraits = true;
-        }
-
-        protected void OnComplete() 
-        {
-            if (waitUntilFinished)
             {
                 Continue();
             }
@@ -199,5 +213,7 @@ namespace Fungus
             //Default to display type: show
             display = StageDisplayType.Show;
         }
+
+        #endregion
     }
 }

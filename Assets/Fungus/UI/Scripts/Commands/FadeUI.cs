@@ -1,122 +1,130 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using Fungus;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Select which type of fade will be applied.
+    /// </summary>
+    public enum FadeMode
+    {
+        /// <summary> Fade the alpha color component only. </summary>
+        Alpha,
+        /// <summary> Fade all color components (RGBA). </summary>
+        Color
+    }
 
+    /// <summary>
+    /// Fades a UI object.
+    /// </summary>
     [CommandInfo("UI",
                  "Fade UI",
                  "Fades a UI object")]
     public class FadeUI : TweenUI 
     {
-        public enum FadeMode
-        {
-            Alpha,
-            Color
-        }
+        [SerializeField] protected FadeMode fadeMode = FadeMode.Alpha;
 
-        public FadeMode fadeMode = FadeMode.Alpha;
+        [SerializeField] protected ColorData targetColor = new ColorData(Color.white);
 
-        public ColorData targetColor = new ColorData(Color.white);
-
-        public FloatData targetAlpha = new FloatData(1f);
+        [SerializeField] protected FloatData targetAlpha = new FloatData(1f);
 
         protected override void ApplyTween(GameObject go)
         {
-            foreach (Image image in go.GetComponentsInChildren<Image>())
+            var images = go.GetComponentsInChildren<Image>();
+            for (int i = 0; i < images.Length; i++)
             {
-                if (duration == 0f)
+                var image = images[i];
+                if (Mathf.Approximately(duration, 0f))
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        Color tempColor = image.color;
-                        tempColor.a = targetAlpha;
-                        image.color = tempColor;
-                        break;
-                    case FadeMode.Color:
-                        image.color = targetColor;
-                        break;
+                        case FadeMode.Alpha:
+                            Color tempColor = image.color;
+                            tempColor.a = targetAlpha;
+                            image.color = tempColor;
+                            break;
+                        case FadeMode.Color:
+                            image.color = targetColor;
+                            break;
                     }
                 }
                 else
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        LeanTween.alpha(image.rectTransform, targetAlpha, duration).setEase(tweenType).setEase(tweenType);
-                        break;
-                    case FadeMode.Color:
-                        LeanTween.color(image.rectTransform, targetColor, duration).setEase(tweenType).setEase(tweenType);
-                        break;
+                        case FadeMode.Alpha:
+                            LeanTween.alpha(image.rectTransform, targetAlpha, duration).setEase(tweenType).setEase(tweenType);
+                            break;
+                        case FadeMode.Color:
+                            LeanTween.color(image.rectTransform, targetColor, duration).setEase(tweenType).setEase(tweenType);
+                            break;
                     }
                 }
             }
 
-            foreach (Text text in go.GetComponentsInChildren<Text>())
+            var texts = go.GetComponentsInChildren<Text>();
+            for (int i = 0; i < texts.Length; i++)
             {
-                if (duration == 0f)
+                var text = texts[i];
+                if (Mathf.Approximately(duration, 0f))
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        Color tempColor = text.color;
-                        tempColor.a = targetAlpha;
-                        text.color = tempColor;
-                        break;
-                    case FadeMode.Color:
-                        text.color = targetColor;
-                        break;
+                        case FadeMode.Alpha:
+                            Color tempColor = text.color;
+                            tempColor.a = targetAlpha;
+                            text.color = tempColor;
+                            break;
+                        case FadeMode.Color:
+                            text.color = targetColor;
+                            break;
                     }
                 }
                 else
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        LeanTween.textAlpha(text.rectTransform, targetAlpha, duration).setEase(tweenType);
-                        break;
-                    case FadeMode.Color:
-                        LeanTween.textColor(text.rectTransform, targetColor, duration).setEase(tweenType);
-                        break;
+                        case FadeMode.Alpha:
+                            LeanTween.textAlpha(text.rectTransform, targetAlpha, duration).setEase(tweenType);
+                            break;
+                        case FadeMode.Color:
+                            LeanTween.textColor(text.rectTransform, targetColor, duration).setEase(tweenType);
+                            break;
                     }
                 }
             }
 
-            foreach (TextMesh textMesh in go.GetComponentsInChildren<TextMesh>())
+            var textMeshes = go.GetComponentsInChildren<TextMesh>();
+            for (int i = 0; i < textMeshes.Length; i++)
             {
-                if (duration == 0f)
+                var textMesh = textMeshes[i];
+                if (Mathf.Approximately(duration, 0f))
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        Color tempColor = textMesh.color;
-                        tempColor.a = targetAlpha;
-                        textMesh.color = tempColor;
-                        break;
-                    case FadeMode.Color:
-                        textMesh.color = targetColor;
-                        break;
+                        case FadeMode.Alpha:
+                            Color tempColor = textMesh.color;
+                            tempColor.a = targetAlpha;
+                            textMesh.color = tempColor;
+                            break;
+                        case FadeMode.Color:
+                            textMesh.color = targetColor;
+                            break;
                     }
                 }
                 else
                 {
                     switch (fadeMode)
                     {
-                    case FadeMode.Alpha:
-                        LeanTween.alpha(go, targetAlpha, duration).setEase(tweenType);
-                        break;
-                    case FadeMode.Color:
-                        LeanTween.color(go, targetColor, duration).setEase(tweenType);
-                        break;
+                        case FadeMode.Alpha:
+                            LeanTween.alpha(go, targetAlpha, duration).setEase(tweenType);
+                            break;
+                        case FadeMode.Color:
+                            LeanTween.color(go, targetColor, duration).setEase(tweenType);
+                            break;
                     }
                 }
             }
@@ -136,6 +144,8 @@ namespace Fungus
             return "";
         }
 
+        #region Public members
+
         public override bool IsPropertyVisible(string propertyName)
         {
             if (fadeMode == FadeMode.Alpha &&
@@ -152,6 +162,7 @@ namespace Fungus
 
             return true;
         }
-    }
 
+        #endregion
+    }
 }

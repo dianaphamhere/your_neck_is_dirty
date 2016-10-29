@@ -1,14 +1,13 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Loads a saved value and stores it in a Boolean, Integer, Float or String variable. If the key is not found then the variable is not modified.
+    /// </summary>
     [CommandInfo("Variable", 
                  "Load Variable", 
                  "Loads a saved value and stores it in a Boolean, Integer, Float or String variable. If the key is not found then the variable is not modified.")]
@@ -16,14 +15,16 @@ namespace Fungus
     public class LoadVariable : Command
     {
         [Tooltip("Name of the saved value. Supports variable substition e.g. \"player_{$PlayerNumber}\"")]
-        public string key = "";
+        [SerializeField] protected string key = "";
 
         [Tooltip("Variable to store the value in.")]
         [VariableProperty(typeof(BooleanVariable),
                           typeof(IntegerVariable), 
                           typeof(FloatVariable), 
                           typeof(StringVariable))]
-        public Variable variable;
+        [SerializeField] protected Variable variable;
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -34,7 +35,7 @@ namespace Fungus
                 return;
             }
 
-            Flowchart flowchart = GetFlowchart();
+            var flowchart = GetFlowchart();
 
             // Prepend the current save profile (if any)
             string prefsKey = SetSaveProfile.saveProfile + "_" + flowchart.SubstituteVariables(key);
@@ -47,7 +48,7 @@ namespace Fungus
                 if (booleanVariable != null)
                 {
                     // PlayerPrefs does not have bool accessors, so just use int
-                    booleanVariable.value = (PlayerPrefs.GetInt(prefsKey) == 1);
+                    booleanVariable.Value = (PlayerPrefs.GetInt(prefsKey) == 1);
                 }
             }
             else if (variableType == typeof(IntegerVariable))
@@ -55,7 +56,7 @@ namespace Fungus
                 IntegerVariable integerVariable = variable as IntegerVariable;
                 if (integerVariable != null)
                 {
-                    integerVariable.value = PlayerPrefs.GetInt(prefsKey);
+                    integerVariable.Value = PlayerPrefs.GetInt(prefsKey);
                 }
             }
             else if (variableType == typeof(FloatVariable))
@@ -63,7 +64,7 @@ namespace Fungus
                 FloatVariable floatVariable = variable as FloatVariable;
                 if (floatVariable != null)
                 {
-                    floatVariable.value = PlayerPrefs.GetFloat(prefsKey);
+                    floatVariable.Value = PlayerPrefs.GetFloat(prefsKey);
                 }
             }
             else if (variableType == typeof(StringVariable))
@@ -71,7 +72,7 @@ namespace Fungus
                 StringVariable stringVariable = variable as StringVariable;
                 if (stringVariable != null)
                 {
-                    stringVariable.value = PlayerPrefs.GetString(prefsKey);
+                    stringVariable.Value = PlayerPrefs.GetString(prefsKey);
                 }
             }
 
@@ -90,13 +91,14 @@ namespace Fungus
                 return "Error: No variable selected";
             }
 
-            return "'" + key + "' into " + variable.key;
+            return "'" + key + "' into " + variable.Key;
         }
 
         public override Color GetButtonColor()
         {
             return new Color32(235, 191, 217, 255);
         }
-    }
-    
+
+        #endregion
+    }    
 }

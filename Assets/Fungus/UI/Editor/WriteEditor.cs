@@ -1,21 +1,15 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
-    
     [CustomEditor (typeof(Write))]
     public class WriteEditor : CommandEditor
     {
-        static public bool showTagHelp;
+        public static bool showTagHelp;
 
         protected SerializedProperty textObjectProp;
         protected SerializedProperty textProp;
@@ -26,7 +20,7 @@ namespace Fungus
         protected SerializedProperty setColorProp;
         protected SerializedProperty waitUntilFinishedProp;
 
-        static public void DrawTagHelpLabel()
+        public static void DrawTagHelpLabel()
         {
             string tagsText = "";
             tagsText += "\n";
@@ -75,16 +69,16 @@ namespace Fungus
             EditorGUILayout.PropertyField(clearTextProp);
 
             EditorGUILayout.PropertyField(textColorProp);
-            switch ((Write.TextColor)textColorProp.enumValueIndex)
+            switch ((TextColor)textColorProp.enumValueIndex)
             {
-            case Write.TextColor.Default:
+            case TextColor.Default:
                 break;
-            case Write.TextColor.SetVisible:
+            case TextColor.SetVisible:
                 break;
-            case Write.TextColor.SetAlpha:
+            case TextColor.SetAlpha:
                 EditorGUILayout.PropertyField(setAlphaProp);
                 break;
-            case Write.TextColor.SetColor:
+            case TextColor.SetColor:
                 EditorGUILayout.PropertyField(setColorProp);
                 break;
             }
@@ -93,6 +87,5 @@ namespace Fungus
 
             serializedObject.ApplyModifiedProperties();
         }
-    }
-    
+    }    
 }

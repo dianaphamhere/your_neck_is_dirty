@@ -1,21 +1,21 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Continuously loop through a block of commands while the condition is true. Use the Break command to force the loop to terminate immediately.
+    /// </summary>
     [CommandInfo("Flow", 
                  "While", 
                  "Continuously loop through a block of commands while the condition is true. Use the Break command to force the loop to terminate immediately.")]
     [AddComponentMenu("")]
     public class While : If
     {
+        #region Public members
+
         public override void OnEnter()
         {
             bool execute = true;
@@ -26,12 +26,12 @@ namespace Fungus
 
             // Find next End statement at same indent level
             End endCommand = null;
-            for (int i = commandIndex + 1; i < parentBlock.commandList.Count; ++i)
+            for (int i = CommandIndex + 1; i < ParentBlock.CommandList.Count; ++i)
             {
-                End command = parentBlock.commandList[i] as End;
+                End command = ParentBlock.CommandList[i] as End;
                 
                 if (command != null && 
-                    command.indentLevel == indentLevel)
+                    command.IndentLevel == indentLevel)
                 {
                     endCommand = command;
                     break;
@@ -41,13 +41,13 @@ namespace Fungus
             if (execute)
             {
                 // Tell the following end command to loop back
-                endCommand.loop = true;
+                endCommand.Loop = true;
                 Continue();
             }
             else
             {
                 // Continue at next command after End
-                Continue (endCommand.commandIndex + 1);
+                Continue (endCommand.CommandIndex + 1);
             }
         }
 
@@ -59,7 +59,8 @@ namespace Fungus
         public override Color GetButtonColor()
         {
             return new Color32(253, 253, 150, 255);
-        }       
-    }
-    
+        }
+
+        #endregion
+    }    
 }

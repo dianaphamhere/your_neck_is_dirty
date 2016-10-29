@@ -1,46 +1,66 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
-using System.Collections;
 
 namespace Fungus
 {
-    
+    /// <summary>
+    /// Axis to apply the tween on.
+    /// </summary>
     public enum iTweenAxis
     {
+        /// <summary> Don't specify an axis. </summary>
         None,
+        /// <summary> Apply the tween on the X axis only. </summary>
         X,
+        /// <summary> Apply the tween on the Y axis only. </summary>
         Y,
+        /// <summary> Apply the tween on the Z axis only. </summary>
         Z
     }
 
+    /// <summary>
+    /// Abstract base class for iTween commands.
+    /// </summary>
     [ExecuteInEditMode]
     public abstract class iTweenCommand : Command
     {
         [Tooltip("Target game object to apply the Tween to")]
-        public GameObjectData _targetObject;
+        [SerializeField] protected GameObjectData _targetObject;
 
         [Tooltip("An individual name useful for stopping iTweens by name")]
-        public StringData _tweenName;
+        [SerializeField] protected StringData _tweenName;
 
         [Tooltip("The time in seconds the animation will take to complete")]
-        public FloatData _duration = new FloatData(1f);
+        [SerializeField] protected FloatData _duration = new FloatData(1f);
 
         [Tooltip("The shape of the easing curve applied to the animation")]
-        public iTween.EaseType easeType = iTween.EaseType.easeInOutQuad;
+        [SerializeField] protected iTween.EaseType easeType = iTween.EaseType.easeInOutQuad;
 
         [Tooltip("The type of loop to apply once the animation has completed")]
-        public iTween.LoopType loopType = iTween.LoopType.none;
+        [SerializeField] protected iTween.LoopType loopType = iTween.LoopType.none;
 
         [Tooltip("Stop any previously added iTweens on this object before adding this iTween")]
-        public bool stopPreviousTweens = false;
+        [SerializeField] protected bool stopPreviousTweens = false;
 
         [Tooltip("Wait until the tween has finished before executing the next command")]
-        public bool waitUntilFinished = true;
+        [SerializeField] protected bool waitUntilFinished = true;
+
+        protected virtual void OniTweenComplete(object param)
+        {
+            Command command = param as Command;
+            if (command != null && command.Equals(this))
+            {
+                if (waitUntilFinished)
+                {
+                    Continue();
+                }
+            }
+        }
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -53,8 +73,10 @@ namespace Fungus
             if (stopPreviousTweens)
             {
                 // Force any existing iTweens on this target object to complete immediately
-                iTween[] tweens = _targetObject.Value.GetComponents<iTween>();
-                foreach (iTween tween in tweens) {
+                var tweens = _targetObject.Value.GetComponents<iTween>();
+                for (int i = 0; i < tweens.Length; i++)
+                {
+                    var tween = tweens[i];
                     tween.time = 0;
                     tween.SendMessage("Update");
                 }
@@ -71,18 +93,6 @@ namespace Fungus
         public virtual void DoTween()
         {}
 
-        protected virtual void OniTweenComplete(object param)
-        {
-            Command command = param as Command;
-            if (command != null && command.Equals(this))
-            {
-                if (waitUntilFinished)
-                {
-                    Continue();
-                }
-            }
-        }
-
         public override string GetSummary()
         {
             if (_targetObject.Value == null)
@@ -97,6 +107,8 @@ namespace Fungus
         {
             return new Color32(233, 163, 180, 255);
         }
+
+        #endregion
 
         #region Backwards compatibility
 
@@ -127,5 +139,4 @@ namespace Fungus
 
         #endregion
     }
-
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -7,6 +9,9 @@ using System.Text;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Helper class to manage parsing and executing the conversation format.
+    /// </summary>
     public class ConversationManager
     {
         protected struct ConversationItem
@@ -16,26 +21,69 @@ namespace Fungus
             public Sprite Portrait { get; set; }
             public RectTransform Position { get; set; }
             public bool Hide { get; set; }
+            public FacingDirection FacingDirection { get; set; }
+            public bool Flip { get; set; }
         }
 
         protected Character[] characters;
 
         protected bool exitSayWait;
 
-        public void PopulateCharacterCache()
+        /// <summary>
+        /// Splits the string passed in by the delimiters passed in.
+        /// Quoted sections are not split, and all tokens have whitespace
+        /// trimmed from the start and end.
+        protected static string[] Split(string stringToSplit)
         {
-            // cache characters for faster lookup
-            characters = UnityEngine.Object.FindObjectsOfType<Character>();
+            var results = new List<string>();
+
+            bool inQuote = false;
+            var currentToken = new StringBuilder();
+            for (int index = 0; index < stringToSplit.Length; ++index)
+            {
+                char currentCharacter = stringToSplit[index];
+                if (currentCharacter == '"')
+                {
+                    // When we see a ", we need to decide whether we are
+                    // at the start or send of a quoted section...
+                    inQuote = !inQuote;
+                }
+                else if (char.IsWhiteSpace(currentCharacter) && !inQuote)
+                {
+                    // We've come to the end of a token, so we find the token,
+                    // trim it and add it to the collection of results...
+                    string result = currentToken.ToString().Trim( new [] { ' ', '\n', '\t', '\"'} );
+                    if (result != "") results.Add(result);
+
+                    // We start a new token...
+                    currentToken = new StringBuilder();
+                }
+                else
+                {
+                    // We've got a 'normal' character, so we add it to
+                    // the curent token...
+                    currentToken.Append(currentCharacter);
+                }
+            }
+
+            // We've come to the end of the string, so we add the last token...
+            string lastResult = currentToken.ToString().Trim();
+            if (lastResult != "") 
+            {
+                results.Add(lastResult);
+            }
+
+            return results.ToArray();
         }
 
-        protected SayDialog GetSayDialog(Character character)
+        protected virtual SayDialog GetSayDialog(Character character)
         {
             SayDialog sayDialog = null;
             if (character != null)
             {
-                if (character.setSayDialog != null)
+                if (character.SetSayDialog != null)
                 {
-                    sayDialog = character.setSayDialog;
+                    sayDialog = character.SetSayDialog;
                 }
             }
 
@@ -47,117 +95,11 @@ namespace Fungus
             return sayDialog;
         }
 
-        /// <summary>
-        /// Parse and execute a conversation string
-        /// </summary>
-        /// <param name="conv"></param>
-        public IEnumerator DoConversation(string conv)
-        {
-            if (string.IsNullOrEmpty(conv))
-            {
-                yield break;
-            }
-            
-            var conversationItems = Parse(conv);
-
-            if (conversationItems.Count == 0)
-            {
-                yield break;
-            }
-
-            // Track the current and previous parameter values
-            Character currentCharacter = null;
-            Sprite currentPortrait = null;
-            RectTransform currentPosition = null;
-            Character previousCharacter = null;
-
-            // Play the conversation
-            for (int i = 0; i < conversationItems.Count; ++i)
-            {
-                ConversationItem item = conversationItems[i];
-                
-                if (item.Character != null)
-                {
-                    currentCharacter = item.Character;
-                }
-
-                currentPortrait = item.Portrait;
-                currentPosition = item.Position;
-
-                SayDialog sayDialog = GetSayDialog(currentCharacter);
-
-                if (sayDialog == null)
-                {
-                    // Should never happen
-                    yield break;
-                }
-
-                sayDialog.gameObject.SetActive(true);
-
-                if (currentCharacter != null && 
-                    currentCharacter != previousCharacter)
-                {
-                    sayDialog.SetCharacter(currentCharacter);
-                }
-
-                var stage = Stage.GetActiveStage();
-
-                if (stage != null && currentCharacter != null &&
-                    (currentPortrait != currentCharacter.state.portrait || 
-                     currentPosition != currentCharacter.state.position))
-                {
-                    var portraitOptions = new PortraitOptions(true);
-                    portraitOptions.display = item.Hide ? DisplayType.Hide : DisplayType.Show;
-                    portraitOptions.character = currentCharacter;
-                    portraitOptions.fromPosition = currentCharacter.state.position;
-                    portraitOptions.toPosition = currentPosition;
-                    portraitOptions.portrait = currentPortrait;
-
-                    // Do a move tween if the character is already on screen and not yet at the specified position
-                    if (currentCharacter.state.onScreen &&
-                        currentPosition != currentCharacter.state.position)
-                    {
-                        portraitOptions.move = true;
-                    }
-
-                    if (item.Hide)
-                    {
-                        stage.Hide(portraitOptions);
-                    }
-                    else
-                    {
-                        stage.Show(portraitOptions);
-                    }
-                }
-
-                if (stage == null &&
-                    currentPortrait != null)
-                {
-                    sayDialog.SetCharacterImage(currentPortrait);
-                }
-                    
-                previousCharacter = currentCharacter;
-                
-                if (!string.IsNullOrEmpty(item.Text)) { 
-                    exitSayWait = false;
-                    sayDialog.Say(item.Text, true, true, true, false, null, () => {
-                        exitSayWait = true;
-                    });
-
-                    while (!exitSayWait)
-                    {
-                        yield return null;
-                    }
-                    exitSayWait = false;
-                }
-            }
-        }
-
         protected virtual List<ConversationItem> Parse(string conv)
         {
             //find SimpleScript say strings with portrait options
             //You can test regex matches here: http://regexstorm.net/tester
-            var sayRegex = new Regex(@"((?<sayParams>[\w ""]*):)?(?<text>.*)\r*(\n|$)");
+            var sayRegex = new Regex(@"((?<sayParams>[\w ""><.']*):)?(?<text>.*)\r*(\n|$)");
             MatchCollection sayMatches = sayRegex.Matches(conv);
 
             var items = new List<ConversationItem>(sayMatches.Count);
@@ -193,12 +135,15 @@ namespace Fungus
 
             return items;
         }
-                                
+
         /// <summary>
         /// Using the string of say parameters before the ':',
         /// set the current character, position and portrait if provided.
         /// </summary>
-        /// <param name="sayParams">The list of say parameters</param>
+        /// <returns>The conversation item.</returns>
+        /// <param name="sayParams">The list of say parameters.</param>
+        /// <param name="text">The text for the character to say.</param>
+        /// <param name="currentCharacter">The currently speaking character.</param>
         protected virtual ConversationItem CreateConversationItem(string[] sayParams, string text, Character currentCharacter)
         {
             var item = new ConversationItem();
@@ -253,6 +198,25 @@ namespace Fungus
                     }
                 }
             }
+
+            int flipIndex = -1;
+            if (item.Character != null)
+            {
+                for (int i = 0; i < sayParams.Length; i++)
+                {
+                    if (i != characterIndex &&
+                        i != hideIndex &&
+                        (string.Compare(sayParams[i], ">>>", true) == 0
+                         || string.Compare(sayParams[i], "<<<", true) == 0))
+                    {
+                        if (string.Compare(sayParams[i], ">>>", true) == 0) item.FacingDirection = FacingDirection.Right;
+                        if (string.Compare(sayParams[i], "<<<", true) == 0) item.FacingDirection = FacingDirection.Left;
+                        flipIndex = i;
+                        item.Flip = true;
+                        break;
+                    }
+                }
+            }
                 
             // Next see if we can find a portrait for this character
             int portraitIndex = -1;
@@ -263,7 +227,8 @@ namespace Fungus
                     if (item.Portrait == null && 
                         item.Character != null &&
                         i != characterIndex && 
-                        i != hideIndex) 
+                        i != hideIndex &&
+                        i != flipIndex) 
                     {
                         Sprite s = item.Character.GetPortrait(sayParams[i]);
                         if (s != null)
@@ -299,51 +264,125 @@ namespace Fungus
             return item;
         }
 
+        #region Public members
+
         /// <summary>
-        /// Splits the string passed in by the delimiters passed in.
-        /// Quoted sections are not split, and all tokens have whitespace
-        /// trimmed from the start and end.
-        protected static string[] Split(string stringToSplit)
+        /// Caches the character objects in the scene for fast lookup during conversations.
+        /// </summary>
+        public virtual void PopulateCharacterCache()
         {
-            var results = new List<string>();
-
-            bool inQuote = false;
-            var currentToken = new StringBuilder();
-            for (int index = 0; index < stringToSplit.Length; ++index)
-            {
-                char currentCharacter = stringToSplit[index];
-                if (currentCharacter == '"')
-                {
-                    // When we see a ", we need to decide whether we are
-                    // at the start or send of a quoted section...
-                    inQuote = !inQuote;
-                }
-                else if (char.IsWhiteSpace(currentCharacter) && !inQuote)
-                {
-                    // We've come to the end of a token, so we find the token,
-                    // trim it and add it to the collection of results...
-                    string result = currentToken.ToString().Trim( new [] { ' ', '\n', '\t', '\"'} );
-                    if (result != "") results.Add(result);
-
-                    // We start a new token...
-                    currentToken = new StringBuilder();
-                }
-                else
-                {
-                    // We've got a 'normal' character, so we add it to
-                    // the curent token...
-                    currentToken.Append(currentCharacter);
-                }
-            }
-
-            // We've come to the end of the string, so we add the last token...
-            string lastResult = currentToken.ToString().Trim();
-            if (lastResult != "") 
-            {
-                results.Add(lastResult);
-            }
-
-            return results.ToArray();
+            // cache characters for faster lookup
+            characters = UnityEngine.Object.FindObjectsOfType<Character>();
         }
+
+        /// <summary>
+        /// Parse and execute a conversation string.
+        /// </summary>
+        public virtual IEnumerator DoConversation(string conv)
+        {
+            if (string.IsNullOrEmpty(conv))
+            {
+                yield break;
+            }
+
+            var conversationItems = Parse(conv);
+
+            if (conversationItems.Count == 0)
+            {
+                yield break;
+            }
+
+            // Track the current and previous parameter values
+            Character currentCharacter = null;
+            Sprite currentPortrait = null;
+            RectTransform currentPosition = null;
+            Character previousCharacter = null;
+
+            // Play the conversation
+            for (int i = 0; i < conversationItems.Count; ++i)
+            {
+                ConversationItem item = conversationItems[i];
+
+                if (item.Character != null)
+                {
+                    currentCharacter = item.Character;
+                }
+
+                currentPortrait = item.Portrait;
+                currentPosition = item.Position;
+
+                var sayDialog = GetSayDialog(currentCharacter);
+
+                if (sayDialog == null)
+                {
+                    // Should never happen
+                    yield break;
+                }
+
+                sayDialog.SetActive(true);
+
+                if (currentCharacter != null && 
+                    currentCharacter != previousCharacter)
+                {
+                    sayDialog.SetCharacter(currentCharacter);
+                }
+
+                var stage = Stage.GetActiveStage();
+
+                if (stage != null && currentCharacter != null &&
+                    (currentPortrait != currentCharacter.State.portrait || 
+                        currentPosition != currentCharacter.State.position))
+                {
+                    var portraitOptions = new PortraitOptions(true);
+                    portraitOptions.display = item.Hide ? DisplayType.Hide : DisplayType.Show;
+                    portraitOptions.character = currentCharacter;
+                    portraitOptions.fromPosition = currentCharacter.State.position;
+                    portraitOptions.toPosition = currentPosition;
+                    portraitOptions.portrait = currentPortrait;
+
+                    //Flip option - Flip the opposite direction the character is currently facing
+                    if (item.Flip) portraitOptions.facing = item.FacingDirection;
+
+                    // Do a move tween if the character is already on screen and not yet at the specified position
+                    if (currentCharacter.State.onScreen &&
+                        currentPosition != currentCharacter.State.position)
+                    {
+                        portraitOptions.move = true;
+                    }
+
+                    if (item.Hide)
+                    {
+                        stage.Hide(portraitOptions);
+                    }
+                    else
+                    {
+                        stage.Show(portraitOptions);
+                    }
+                }
+
+                if (stage == null &&
+                    currentPortrait != null)
+                {
+                    sayDialog.SetCharacterImage(currentPortrait);
+                }
+
+                previousCharacter = currentCharacter;
+
+                if (!string.IsNullOrEmpty(item.Text)) { 
+                    exitSayWait = false;
+                    sayDialog.Say(item.Text, true, true, true, false, null, () => {
+                        exitSayWait = true;
+                    });
+
+                    while (!exitSayWait)
+                    {
+                        yield return null;
+                    }
+                    exitSayWait = false;
+                }
+            }
+        }
+
+        #endregion
     }
 }

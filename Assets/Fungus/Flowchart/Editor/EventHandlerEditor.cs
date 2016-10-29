@@ -1,27 +1,21 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
-
     [CustomEditor (typeof(EventHandler), true)]
     public class EventHandlerEditor : Editor 
     {
-        /**
-         * Returns the class attribute info for an event handler class.
-         */
+        /// <summary>
+        /// Returns the class attribute info for an event handler class.
+        /// </summary>
         public static EventHandlerInfoAttribute GetEventHandlerInfo(System.Type eventHandlerType)
         {
             object[] attributes = eventHandlerType.GetCustomAttributes(typeof(EventHandlerInfoAttribute), false);
-            foreach (object obj in attributes)
+            foreach (var obj in attributes)
             {
                 EventHandlerInfoAttribute eventHandlerInfoAttr = obj as EventHandlerInfoAttribute;
                 if (eventHandlerInfoAttr != null)
@@ -64,5 +58,4 @@ namespace Fungus
             serializedObject.ApplyModifiedProperties();
         }
     }
-
 }

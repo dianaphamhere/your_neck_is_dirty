@@ -1,15 +1,14 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
-using System;
-using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Makes a sprite visible / invisible by setting the color alpha.
+    /// </summary>
     [CommandInfo("Sprite", 
                  "Show Sprite", 
                  "Makes a sprite visible / invisible by setting the color alpha.")]
@@ -18,13 +17,22 @@ namespace Fungus
     public class ShowSprite : Command
     {
         [Tooltip("Sprite object to be made visible / invisible")]
-        public SpriteRenderer spriteRenderer;
+        [SerializeField] protected SpriteRenderer spriteRenderer;
 
         [Tooltip("Make the sprite visible or invisible")]
-        public BooleanData _visible = new BooleanData(false);
+        [SerializeField] protected BooleanData _visible = new BooleanData(false);
 
         [Tooltip("Affect the visibility of child sprites")]
-        public bool affectChildren = true;
+        [SerializeField] protected bool affectChildren = true;
+
+        protected virtual void SetSpriteAlpha(SpriteRenderer renderer, bool visible)
+        {
+            Color spriteColor = renderer.color;
+            spriteColor.a = visible ? 1f : 0f;
+            renderer.color = spriteColor;
+        }
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -32,9 +40,10 @@ namespace Fungus
             {
                 if (affectChildren)
                 {
-                    SpriteRenderer[] children = spriteRenderer.gameObject.GetComponentsInChildren<SpriteRenderer>();
-                    foreach (SpriteRenderer sr in children)
+                    var spriteRenderers = spriteRenderer.gameObject.GetComponentsInChildren<SpriteRenderer>();
+                    for (int i = 0; i < spriteRenderers.Length; i++)
                     {
+                        var sr = spriteRenderers[i];
                         SetSpriteAlpha(sr, _visible.Value);
                     }
                 }
@@ -45,13 +54,6 @@ namespace Fungus
             }
 
             Continue();
-        }
-
-        protected virtual void SetSpriteAlpha(SpriteRenderer renderer, bool visible)
-        {
-            Color spriteColor = renderer.color;
-            spriteColor.a = visible ? 1f : 0f;
-            renderer.color = spriteColor;
         }
 
         public override string GetSummary()
@@ -69,6 +71,8 @@ namespace Fungus
             return new Color32(221, 184, 169, 255);
         }
 
+        #endregion
+
         #region Backwards compatibility
 
         [HideInInspector] [FormerlySerializedAs("visible")] public bool visibleOLD;
@@ -84,5 +88,4 @@ namespace Fungus
 
         #endregion
     }
-
 }

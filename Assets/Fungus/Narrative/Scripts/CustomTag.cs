@@ -1,26 +1,29 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Create custom tags for use in Say text.
+    /// </summary>
     [ExecuteInEditMode]
-    public class CustomTag : MonoBehaviour 
+    public class CustomTag : MonoBehaviour
     {
-        public string tagStartSymbol;
-        public string tagEndSymbol;
-        public string replaceTagStartWith;
-        public string replaceTagEndWith;
-        
-        static public List<CustomTag> activeCustomTags = new List<CustomTag>();
-        
+        [Tooltip("String that defines the start of the tag.")]
+        [SerializeField] protected string tagStartSymbol;
+
+        [Tooltip("String that defines the end of the tag.")]
+        [SerializeField] protected string tagEndSymbol;
+
+        [Tooltip("String to replace the start tag with.")]
+        [SerializeField] protected string replaceTagStartWith;
+
+        [Tooltip("String to replace the end tag with.")]
+        [SerializeField] protected string replaceTagEndWith;
+
         protected virtual void OnEnable()
         {
             if (!activeCustomTags.Contains(this))
@@ -33,6 +36,31 @@ namespace Fungus
         {
             activeCustomTags.Remove(this);
         }
+
+        #region Public members
+
+        public static List<CustomTag> activeCustomTags = new List<CustomTag>();
+
+        /// <summary>
+        /// String that defines the start of the tag.
+        /// </summary>
+        public virtual string TagStartSymbol { get { return tagStartSymbol; } }
+
+        /// <summary>
+        /// String that defines the end of the tag.
+        /// </summary>
+        public virtual string TagEndSymbol { get { return tagEndSymbol; } }
+
+        /// <summary>
+        /// String to replace the start tag with.
+        /// </summary>
+        public virtual string ReplaceTagStartWith { get { return replaceTagStartWith; } }
+
+        /// <summary>
+        /// String to replace the end tag with.
+        /// </summary>
+        public virtual string ReplaceTagEndWith { get { return replaceTagEndWith; } }
+
+        #endregion
     }
-    
 }

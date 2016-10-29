@@ -1,18 +1,12 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
 using UnityEngine;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
-
-    [CustomEditor (typeof(Fungus.Menu))]
+    [CustomEditor (typeof(Menu))]
     public class MenuEditor : CommandEditor 
     {
         protected SerializedProperty textProp;
@@ -37,7 +31,7 @@ namespace Fungus
         
         public override void DrawCommandGUI()
         {
-            Flowchart flowchart = FlowchartWindow.GetFlowchart();
+            var flowchart = FlowchartWindow.GetFlowchart();
             if (flowchart == null)
             {
                 return;
@@ -60,6 +54,5 @@ namespace Fungus
 
             serializedObject.ApplyModifiedProperties();
         }
-    }
-    
+    }    
 }

@@ -1,7 +1,5 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
 using System.Collections;
@@ -9,51 +7,45 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Text;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Interop;
-using MoonSharp.Interpreter.Loaders;
-using MoonSharp.RemoteDebugger;
 
 namespace Fungus
 {
-
-    public class LuaUtils : LuaEnvironment.Initializer, StringSubstituter.ISubstitutionHandler
+    /// <summary>
+    /// Options for using the Lua FungusModule.
+    /// </summary>
+    public enum FungusModuleOptions
     {
-        public enum FungusModuleOptions
-        {
-            UseGlobalVariables, // Fungus helper items will be available as global variables.
-            UseFungusVariable,  // Fungus helper items will be available in the 'fungus' global variable.
-            NoFungusModule      // The fungus helper module will not be loaded.
-        }
+        UseGlobalVariables, // Fungus helper items will be available as global variables.
+        UseFungusVariable,  // Fungus helper items will be available in the 'fungus' global variable.
+        NoFungusModule      // The fungus helper module will not be loaded.
+    }
 
-        /// <summary>
-        /// Controls if the fungus utilities are accessed from globals (e.g. say) or via a fungus variable (e.g. fungus.say)"
-        /// You can also choose to disable loading the fungus module if it's not required by your script.
-        /// </summary>
-        [Tooltip("Controls if the fungus utilities are accessed from globals (e.g. say) or via a fungus variable (e.g. fungus.say)")]
-        public FungusModuleOptions fungusModule = FungusModuleOptions.UseGlobalVariables;
+    /// <summary>
+    /// A collection of utilites to use in Lua for common Unity / Fungus tasks.
+    /// </summary>
+    public class LuaUtils : LuaEnvironmentInitializer, ISubstitutionHandler
+    {
+        [Tooltip("Controls if the fungus utilities are accessed from globals (e.g. say) or via a fungus variable (e.g. fungus.say). You can also choose to disable loading the fungus module if it's not required by your script.")]
+        [SerializeField] protected FungusModuleOptions fungusModule = FungusModuleOptions.UseGlobalVariables;
 
-        /// <summary>
-        /// The currently selected language in the string table. Affects variable substitution.
-        /// </summary>
         [Tooltip("The currently selected language in the string table. Affects variable substitution.")]
-        public string activeLanguage = "en";
+        [SerializeField] protected string activeLanguage = "en";
 
         /// <summary>
         /// Lua script file which defines the global string table used for localisation.
         /// </summary>
         [HideInInspector]
         [Tooltip("List of JSON text files which contain localized strings. These strings are added to the 'stringTable' table in the Lua environment at startup.")]
-        public List<TextAsset> stringTables = new List<TextAsset>();
+        [SerializeField] protected List<TextAsset> stringTables = new List<TextAsset>();
 
         /// <summary>
         /// JSON text files listing the c# types that can be accessed from Lua.
         /// </summary>
         [HideInInspector]
         [Tooltip("JSON text files listing the c# types that can be accessed from Lua.")]
-        public List<TextAsset> registerTypes = new List<TextAsset>();
+        [SerializeField] protected List<TextAsset> registerTypes = new List<TextAsset>();
 
         /// <summary>
         /// Flag used to avoid startup dependency issues.
@@ -68,43 +60,12 @@ namespace Fungus
         /// <summary>
         /// Cached reference to the Lua Environment component.
         /// </summary>
-        protected LuaEnvironment luaEnvironment;
+        protected LuaEnvironment luaEnvironment { get; set; }
 
         protected StringSubstituter stringSubstituter;
 
         protected ConversationManager conversationManager;
         
-        /// <summary>
-        /// Called by LuaEnvironment when initializing.
-        /// </summary>
-        public override void Initialize()
-        {   
-            luaEnvironment = GetComponent<LuaEnvironment>();
-            if (luaEnvironment == null)
-            {
-                UnityEngine.Debug.LogError("No Lua Environment found");
-                return;
-            }
-
-            if (luaEnvironment.Interpreter == null)
-            {
-                UnityEngine.Debug.LogError("No Lua interpreter found");
-                return;
-            }
-
-            InitTypes();
-            InitFungusModule();
-            InitBindings();
-        }
-
-        /// <summary>
-        /// Called by LuaEnvironment prior to executing a script.
-        /// </summary>
-        public override string PreprocessScript(string input)
-        {
-            return input;
-        }
-
         /// <summary>
         /// Registers all listed c# types for interop with Lua.
         /// You can also register types directly in the Awake method of any 
@@ -113,6 +74,10 @@ namespace Fungus
         protected virtual void InitTypes()
         {
             bool isFungusInstalled = (Type.GetType("Fungus.Flowchart") != null);
+
+            // Always register these FungusLua utilities
+            LuaEnvironment.RegisterType("Fungus.PODTypeFactory");
+            LuaEnvironment.RegisterType("Fungus.FungusPrefs");
 
             foreach (TextAsset textFile in registerTypes)
             {
@@ -284,6 +249,7 @@ namespace Fungus
             }
 
             stringSubstituter = new StringSubstituter();
+            stringSubstituter.CacheSubstitutionHandlers();
 
             conversationManager = new ConversationManager();
             conversationManager.PopulateCharacterCache();
@@ -308,6 +274,13 @@ namespace Fungus
                 // Note: We can't remove the fungus table itself because of dependencies between functions
             }
         }
+
+        #region Public members
+
+        /// <summary>
+        /// The currently selected language in the string table. Affects variable substitution.
+        /// </summary>
+        public virtual string ActiveLanguage { get { return activeLanguage; } set { activeLanguage = value; } }
 
         /// <summary>
         /// Returns a string from the string table for this key.
@@ -413,7 +386,7 @@ namespace Fungus
         {
             return stringSubstituter.SubstituteStrings(input);
         }
-            
+
         /// <summary>
         /// Find a game object by name and returns it.
         /// </summary>
@@ -437,7 +410,7 @@ namespace Fungus
         {
             return GameObject.FindGameObjectsWithTag(tag);
         }
-            
+
         /// <summary>
         /// Create a copy of a GameObject.
         /// Can be used to instantiate prefabs.
@@ -466,7 +439,7 @@ namespace Fungus
             if (prefab != null)
             {
                 GameObject go = Instantiate(prefab) as GameObject;
-                go.name = resourceName;
+                go.name = resourceName.Replace("Prefabs/", "");
                 return go;
             }
             return null;
@@ -475,7 +448,6 @@ namespace Fungus
         /// <summary>
         /// Use the conversation manager to play out a conversation
         /// </summary>
-        /// <param name="conv"></param>
         public virtual IEnumerator DoConversation(string conv)
         {
             return conversationManager.DoConversation(conv);
@@ -484,11 +456,40 @@ namespace Fungus
         /// <summary>
         /// Sync the active say dialog with what Lua thinks the SayDialog should be
         /// </summary>
-        /// <param name="sayDialog"></param>
         public void SetSayDialog(SayDialog sayDialog)
         {
-            SayDialog.activeSayDialog = sayDialog;
+            SayDialog.ActiveSayDialog = sayDialog;
         }
-   }
 
+        #endregion
+
+        #region LuaEnvironmentInitializer implementation
+
+        public override void Initialize()
+        {   
+            luaEnvironment = GetComponent<LuaEnvironment>();
+            if (luaEnvironment == null)
+            {
+                Debug.LogError("No Lua Environment found");
+                return;
+            }
+
+            if (luaEnvironment.Interpreter == null)
+            {
+                Debug.LogError("No Lua interpreter found");
+                return;
+            }
+
+            InitTypes();
+            InitFungusModule();
+            InitBindings();
+        }
+
+        public override string PreprocessScript(string input)
+        {
+            return input;
+        }
+
+        #endregion
+   }
 }

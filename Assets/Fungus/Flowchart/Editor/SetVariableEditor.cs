@@ -1,14 +1,11 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
 
     [CustomEditor (typeof(SetVariable))]
@@ -40,7 +37,7 @@ namespace Fungus
 
             SetVariable t = target as SetVariable;
 
-            Flowchart flowchart = t.GetFlowchart();
+            var flowchart = (Flowchart)t.GetFlowchart();
             if (flowchart == null)
             {
                 return;
@@ -73,32 +70,32 @@ namespace Fungus
             }
             
             int selectedIndex = 0;
-            switch (t.setOperator)
+            switch (t._SetOperator)
             {
                 default:
-                case SetVariable.SetOperator.Assign:
+                case SetOperator.Assign:
                     selectedIndex = 0;
                     break;
-                case SetVariable.SetOperator.Negate:
+                case SetOperator.Negate:
                     selectedIndex = 1;
                     break;
-                case SetVariable.SetOperator.Add:
+                case SetOperator.Add:
                     selectedIndex = 1;
                     break;
-                case SetVariable.SetOperator.Subtract:
+                case SetOperator.Subtract:
                     selectedIndex = 2;
                     break;
-                case SetVariable.SetOperator.Multiply:
+                case SetOperator.Multiply:
                     selectedIndex = 3;
                     break;
-                case SetVariable.SetOperator.Divide:
+                case SetOperator.Divide:
                     selectedIndex = 4;
                     break;
             }
 
             selectedIndex = EditorGUILayout.Popup(new GUIContent("Operation", "Arithmetic operator to use"), selectedIndex, operatorsList.ToArray());
             
-            SetVariable.SetOperator setOperator = SetVariable.SetOperator.Assign;
+            SetOperator setOperator = SetOperator.Assign;
             if (variableType == typeof(BooleanVariable) || 
                 variableType == typeof(StringVariable))
             {
@@ -106,10 +103,10 @@ namespace Fungus
                 {
                 default:
                 case 0:
-                    setOperator = SetVariable.SetOperator.Assign;
+                    setOperator = SetOperator.Assign;
                     break;
                 case 1:
-                    setOperator = SetVariable.SetOperator.Negate;
+                    setOperator = SetOperator.Negate;
                     break;
                 }
             } 
@@ -120,19 +117,19 @@ namespace Fungus
                 {
                 default:
                 case 0:
-                    setOperator = SetVariable.SetOperator.Assign;
+                    setOperator = SetOperator.Assign;
                     break;
                 case 1:
-                    setOperator = SetVariable.SetOperator.Add;
+                    setOperator = SetOperator.Add;
                     break;
                 case 2:
-                    setOperator = SetVariable.SetOperator.Subtract;
+                    setOperator = SetOperator.Subtract;
                     break;
                 case 3:
-                    setOperator = SetVariable.SetOperator.Multiply;
+                    setOperator = SetOperator.Multiply;
                     break;
                 case 4:
-                    setOperator = SetVariable.SetOperator.Divide;
+                    setOperator = SetOperator.Divide;
                     break;
                 }
             }
@@ -159,5 +156,4 @@ namespace Fungus
             serializedObject.ApplyModifiedProperties();
         }
     }
-
 }

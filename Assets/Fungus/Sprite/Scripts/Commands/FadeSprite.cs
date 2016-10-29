@@ -1,15 +1,14 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
-using System;
-using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Fades a sprite to a target color over a period of time.
+    /// </summary>
     [CommandInfo("Sprite", 
                  "Fade Sprite", 
                  "Fades a sprite to a target color over a period of time.")]
@@ -18,16 +17,18 @@ namespace Fungus
     public class FadeSprite : Command
     {
         [Tooltip("Sprite object to be faded")]
-        public SpriteRenderer spriteRenderer;
+        [SerializeField] protected SpriteRenderer spriteRenderer;
 
         [Tooltip("Length of time to perform the fade")]
-        public FloatData _duration = new FloatData(1f);
+        [SerializeField] protected FloatData _duration = new FloatData(1f);
 
         [Tooltip("Target color to fade to. To only fade transparency level, set the color to white and set the alpha to required transparency.")]
-        public ColorData _targetColor = new ColorData(Color.white);
+        [SerializeField] protected ColorData _targetColor = new ColorData(Color.white);
 
         [Tooltip("Wait until the fade has finished before executing the next command")]
-        public bool waitUntilFinished = true;
+        [SerializeField] protected bool waitUntilFinished = true;
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -37,17 +38,9 @@ namespace Fungus
                 return;
             }
 
-            CameraController cameraController = CameraController.GetInstance();
-
-            if (waitUntilFinished)
-            {
-                cameraController.waiting = true;
-            }
-
             SpriteFader.FadeSprite(spriteRenderer, _targetColor.Value, _duration.Value, Vector2.zero, delegate {
                 if (waitUntilFinished)
                 {
-                    cameraController.waiting = false;
                     Continue();
                 }
             });
@@ -73,6 +66,8 @@ namespace Fungus
             return new Color32(221, 184, 169, 255);
         }
 
+        #endregion
+
         #region Backwards compatibility
 
         [HideInInspector] [FormerlySerializedAs("duration")] public float durationOLD;
@@ -94,5 +89,4 @@ namespace Fungus
 
         #endregion
     }
-
 }

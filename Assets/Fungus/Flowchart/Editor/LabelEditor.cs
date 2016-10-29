@@ -1,24 +1,18 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
     [CustomEditor (typeof(Label))]
     public class LabelEditor : CommandEditor
     {
         protected SerializedProperty keyProp;
         
-        static public void LabelField(SerializedProperty property, 
+        public static void LabelField(SerializedProperty property, 
                                       GUIContent labelText, 
                                       Block block)
         {
@@ -32,7 +26,8 @@ namespace Fungus
 
             int index = 0;
             int selectedIndex = 0;
-            foreach (Command command in block.commandList)
+            var commandList = block.CommandList;
+            foreach (var command in commandList)
             {
                 Label label = command as Label;
                 if (label == null)
@@ -40,7 +35,7 @@ namespace Fungus
                     continue;
                 }
 
-                labelKeys.Add(label.key);
+                labelKeys.Add(label.Key);
                 labelObjects.Add(label);
                 
                 index++;
@@ -68,7 +63,7 @@ namespace Fungus
         {
             Label t = target as Label;
 
-            Flowchart flowchart = t.GetFlowchart();
+            var flowchart = (Flowchart)t.GetFlowchart();
             if (flowchart == null)
             {
                 return;
@@ -81,6 +76,5 @@ namespace Fungus
 
             serializedObject.ApplyModifiedProperties();
         }
-    }
-    
+    }    
 }

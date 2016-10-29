@@ -1,24 +1,33 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System.Collections;
 
 namespace Fungus
 {
-
+    /// <summary>
+    /// Temporary buffer object used when copying and pasting commands.
+    /// </summary>
     [AddComponentMenu("")]
     public class CommandCopyBuffer : Block 
     {
         protected static CommandCopyBuffer instance;
-        
-        /**
-         * Returns the CommandCopyBuffer singleton instance.
-         * Will create a CommandCopyBuffer game object if none currently exists.
-         */
-        static public CommandCopyBuffer GetInstance()
+
+        protected virtual void Start()
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(this.gameObject);
+            }
+        }
+
+        #region Public members
+
+        /// <summary>
+        /// Returns the CommandCopyBuffer singleton instance.
+        /// Will create a CommandCopyBuffer game object if none currently exists.
+        /// </summary>
+        public static CommandCopyBuffer GetInstance()
         {
             if (instance == null)
             {
@@ -37,16 +46,8 @@ namespace Fungus
                     instance = go.AddComponent<CommandCopyBuffer>();
                 }
             }
-            
-            return instance;
-        }
 
-        protected virtual void Start()
-        {
-            if (Application.isPlaying)
-            {
-                Destroy(this.gameObject);
-            }
+            return instance;
         }
 
         public virtual bool HasCommands()
@@ -61,11 +62,14 @@ namespace Fungus
 
         public virtual void Clear()
         {
-            foreach (Command command in GetCommands())
+            var commands = GetCommands();
+            for (int i = 0; i < commands.Length; i++)
             {
+                var command = commands[i];
                 DestroyImmediate(command);
             }
         }
-    }
 
+        #endregion
+    }
 }

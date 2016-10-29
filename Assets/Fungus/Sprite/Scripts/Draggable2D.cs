@@ -1,43 +1,39 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
-
 namespace Fungus
 {
-
-    /**
-     * Detects drag and drop interactions on a Game Object, and sends events to all Flowchart event handlers in the scene.
-     * The Game Object must have Collider2D & RigidBody components attached. 
-     * The Collider2D must have the Is Trigger property set to true.
-     * The RigidBody would typically have the Is Kinematic property set to true, unless you want the object to move around using physics.
-     * Use in conjunction with the Drag Started, Drag Completed, Drag Cancelled, Drag Entered & Drag Exited event handlers.
-     */
+    /// <summary>
+    /// Detects drag and drop interactions on a Game Object, and sends events to all Flowchart event handlers in the scene.
+    /// The Game Object must have Collider2D & RigidBody components attached. 
+    /// The Collider2D must have the Is Trigger property set to true.
+    /// The RigidBody would typically have the Is Kinematic property set to true, unless you want the object to move around using physics.
+    /// Use in conjunction with the Drag Started, Drag Completed, Drag Cancelled, Drag Entered & Drag Exited event handlers.
+    /// </summary>
     public class Draggable2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [Tooltip("Is object dragging enabled")]
-        public bool dragEnabled = true;
+        [SerializeField] protected bool dragEnabled = true;
 
         [Tooltip("Move object back to its starting position when drag is cancelled")]
         [FormerlySerializedAs("returnToStartPos")]
-        public bool returnOnCancelled = true;
+        [SerializeField] protected bool returnOnCancelled = true;
 
         [Tooltip("Move object back to its starting position when drag is completed")]
-        public bool returnOnCompleted = true;
+        [SerializeField] protected bool returnOnCompleted = true;
 
         [Tooltip("Time object takes to return to its starting position")]
-        public float returnDuration = 1f;
+        [SerializeField] protected float returnDuration = 1f;
 
         [Tooltip("Mouse texture to use when hovering mouse over object")]
-        public Texture2D hoverCursor;
+        [SerializeField] protected Texture2D hoverCursor;
 
         [Tooltip("Use the UI Event System to check for drag events. Clicks that hit an overlapping UI object will be ignored. Camera must have a PhysicsRaycaster component, or a Physics2DRaycaster for 2D colliders.")]
-        public bool useEventSystem;
+        [SerializeField] protected bool useEventSystem;
 
         protected Vector3 startingPosition;
         protected bool updatePosition = false;
@@ -62,13 +58,17 @@ namespace Fungus
                 return;
             }
 
-            foreach (DragEntered handler in GetHandlers<DragEntered>())
+            var dragEnteredHandlers = GetHandlers<DragEntered>();
+            for (int i = 0; i < dragEnteredHandlers.Length; i++)
             {
+                var handler = dragEnteredHandlers[i];
                 handler.OnDragEntered(this, other);
             }
 
-            foreach (DragCompleted handler in GetHandlers<DragCompleted>())
+            var dragCompletedHandlers = GetHandlers<DragCompleted>();
+            for (int i = 0; i < dragCompletedHandlers.Length; i++)
             {
+                var handler = dragCompletedHandlers[i];
                 handler.OnDragEntered(this, other);
             }
         }
@@ -80,13 +80,17 @@ namespace Fungus
                 return;
             }
 
-            foreach (DragExited handler in GetHandlers<DragExited>())
+            var dragExitedHandlers = GetHandlers<DragExited>();
+            for (int i = 0; i < dragExitedHandlers.Length; i++)
             {
+                var handler = dragExitedHandlers[i];
                 handler.OnDragExited(this, other);
             }
 
-            foreach (DragCompleted handler in GetHandlers<DragCompleted>())
+            var dragCompletedHandlers = GetHandlers<DragCompleted>();
+            for (int i = 0; i < dragCompletedHandlers.Length; i++)
             {
+                var handler = dragCompletedHandlers[i];
                 handler.OnDragExited(this, other);
             }
         }
@@ -97,7 +101,105 @@ namespace Fungus
             return GameObject.FindObjectsOfType<T>();
         }
 
+        protected virtual void DoBeginDrag()
+        {
+            // Offset the object so that the drag is anchored to the exact point where the user clicked it
+            float x = Input.mousePosition.x;
+            float y = Input.mousePosition.y;
+            delta = Camera.main.ScreenToWorldPoint(new Vector3(x, y, 10f)) - transform.position;
+            delta.z = 0f;
+
+            startingPosition = transform.position;
+
+            var dragStartedHandlers = GetHandlers<DragStarted>();
+            for (int i = 0; i < dragStartedHandlers.Length; i++)
+            {
+                var handler = dragStartedHandlers[i];
+                handler.OnDragStarted(this);
+            }
+        }
+
+        protected virtual void DoDrag()
+        {
+            if (!dragEnabled)
+            {
+                return;
+            }
+
+            float x = Input.mousePosition.x;
+            float y = Input.mousePosition.y;
+            float z = transform.position.z;
+
+            newPosition = Camera.main.ScreenToWorldPoint(new Vector3(x, y, 10f)) - delta;
+            newPosition.z = z;
+            updatePosition = true;
+        }
+
+        protected virtual void DoEndDrag()
+        {
+            if (!dragEnabled)
+            {
+                return;
+            }
+
+            bool dragCompleted = false;
+
+            var handlers = GetHandlers<DragCompleted>();
+            for (int i = 0; i < handlers.Length; i++)
+            {
+                var handler = handlers[i];
+                if (handler.DraggableObject == this)
+                {
+                    if (handler.IsOverTarget())
+                    {
+                        handler.OnDragCompleted(this);
+                        dragCompleted = true;
+                        if (returnOnCompleted)
+                        {
+                            LeanTween.move(gameObject, startingPosition, returnDuration).setEase(LeanTweenType.easeOutExpo);
+                        }
+                    }
+                }
+            }
+
+            if (!dragCompleted)
+            {
+                var dragCancelledHandlers = GetHandlers<DragCancelled>();
+                for (int i = 0; i < dragCancelledHandlers.Length; i++)
+                {
+                    var handler = dragCancelledHandlers[i];
+                    handler.OnDragCancelled(this);
+                }
+
+                if (returnOnCancelled)
+                {
+                    LeanTween.move(gameObject, startingPosition, returnDuration).setEase(LeanTweenType.easeOutExpo);
+                }
+            }
+        }
+
+        protected virtual void DoPointerEnter()
+        {
+            ChangeCursor(hoverCursor);
+        }
+
+        protected virtual void DoPointerExit()
+        {
+            SetMouseCursor.ResetMouseCursor();
+        }
+
+        protected virtual void ChangeCursor(Texture2D cursorTexture)
+        {
+            if (!dragEnabled)
+            {
+                return;
+            }
+
+            Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
+        }
+
         #region Legacy OnMouseX methods
+
         protected virtual void OnMouseDown()
         {
             if (!useEventSystem)
@@ -137,9 +239,21 @@ namespace Fungus
                 DoPointerExit();
             }
         }
+
         #endregion
 
-        #region Pointer and Drag handler implementations
+        #region Public members
+
+        /// <summary>
+        /// Is object drag and drop enabled.
+        /// </summary>
+        /// <value><c>true</c> if drag enabled; otherwise, <c>false</c>.</value>
+        public virtual bool DragEnabled { get { return dragEnabled; } set { dragEnabled = value; } }
+
+        #endregion
+
+        #region IBeginDragHandler implementation
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (useEventSystem)
@@ -147,6 +261,10 @@ namespace Fungus
                 DoBeginDrag();
             }
         }
+
+        #endregion
+
+        #region IDragHandler implementation
 
         public void OnDrag(PointerEventData eventData)
         {
@@ -156,6 +274,10 @@ namespace Fungus
             }
         }
 
+        #endregion
+
+        #region IEndDragHandler implementation
+
         public void OnEndDrag(PointerEventData eventData)
         {
             if (useEventSystem)
@@ -163,6 +285,10 @@ namespace Fungus
                 DoEndDrag();
             }
         }
+
+        #endregion
+
+        #region IPointerEnterHandler implementation
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -172,6 +298,10 @@ namespace Fungus
             }
         }
 
+        #endregion
+
+        #region IPointerExitHandler implementation
+
         public void OnPointerExit(PointerEventData eventData)
         {
             if (useEventSystem)
@@ -179,99 +309,7 @@ namespace Fungus
                 DoPointerExit();
             }
         }
+
         #endregion
-
-        protected virtual void DoBeginDrag()
-        {
-            // Offset the object so that the drag is anchored to the exact point where the user clicked it
-            float x = Input.mousePosition.x;
-            float y = Input.mousePosition.y;
-            delta = Camera.main.ScreenToWorldPoint(new Vector3(x, y, 10f)) - transform.position;
-            delta.z = 0f;
-            
-            startingPosition = transform.position;
-            
-            foreach (DragStarted handler in GetHandlers<DragStarted>())
-            {
-                handler.OnDragStarted(this);
-            }
-        }
-
-        protected virtual void DoDrag()
-        {
-            if (!dragEnabled)
-            {
-                return;
-            }
-            
-            float x = Input.mousePosition.x;
-            float y = Input.mousePosition.y;
-            float z = transform.position.z;
-            
-            newPosition = Camera.main.ScreenToWorldPoint(new Vector3(x, y, 10f)) - delta;
-            newPosition.z = z;
-            updatePosition = true;
-        }
-
-        protected virtual void DoEndDrag()
-        {
-            if (!dragEnabled)
-            {
-                return;
-            }
-            
-            bool dragCompleted = false;
-            
-            DragCompleted[] handlers = GetHandlers<DragCompleted>();
-            foreach (DragCompleted handler in handlers)
-            {
-                if (handler.draggableObject == this)
-                {
-                    if (handler.IsOverTarget())
-                    {
-                        handler.OnDragCompleted(this);
-                        dragCompleted = true;
-                        
-                        if (returnOnCompleted)
-                        {
-                            LeanTween.move(gameObject, startingPosition, returnDuration).setEase(LeanTweenType.easeOutExpo);
-                        }
-                    }
-                }
-            }
-            
-            if (!dragCompleted)
-            {
-                foreach (DragCancelled handler in GetHandlers<DragCancelled>())
-                {
-                    handler.OnDragCancelled(this);
-                }
-                
-                if (returnOnCancelled)
-                {
-                    LeanTween.move(gameObject, startingPosition, returnDuration).setEase(LeanTweenType.easeOutExpo);
-                }
-            }
-        }
-
-        protected virtual void DoPointerEnter()
-        {
-            ChangeCursor(hoverCursor);
-        }
-        
-        protected virtual void DoPointerExit()
-        {
-            SetMouseCursor.ResetMouseCursor();
-        }
-
-        protected virtual void ChangeCursor(Texture2D cursorTexture)
-        {
-            if (!dragEnabled)
-            {
-                return;
-            }
-            
-            Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
-        }
     }
 }

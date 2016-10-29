@@ -1,67 +1,114 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Fungus
 {
-    
+    /// <summary>
+    /// Controls a character portrait.
+    /// </summary>
     [CommandInfo("Narrative", 
                  "Portrait", 
-                 "Controls a character portrait. ")]
+                 "Controls a character portrait.")]
     public class Portrait : ControlWithDisplay<DisplayType>
     {
         [Tooltip("Stage to display portrait on")]
-        public Stage stage;
-        
-        [Tooltip("Character to display")]
-        public Character character;
-        
-        [Tooltip("Character to swap with")]
-        public Character replacedCharacter;
-        
-        [Tooltip("Portrait to display")]
-        public Sprite portrait;
-        
-        [Tooltip("Move the portrait from/to this offset position")]
-        public PositionOffset offset;
-        
-        [Tooltip("Move the portrait from this position")]
-        public RectTransform fromPosition;
+        [SerializeField] protected Stage stage;
 
-        [Tooltip("Move the portrait to this positoin")]
-        public RectTransform toPosition;
+        [Tooltip("Character to display")]
+        [SerializeField] protected Character character;
+
+        [Tooltip("Character to swap with")]
+        [SerializeField] protected Character replacedCharacter;
+
+        [Tooltip("Portrait to display")]
+        [SerializeField] protected Sprite portrait;
+
+        [Tooltip("Move the portrait from/to this offset position")]
+        [SerializeField] protected PositionOffset offset;
+
+        [Tooltip("Move the portrait from this position")]
+        [SerializeField] protected RectTransform fromPosition;
+
+        [Tooltip("Move the portrait to this position")]
+        [SerializeField] protected RectTransform toPosition;
 
         [Tooltip("Direction character is facing")]
-        public FacingDirection facing;
-        
+        [SerializeField] protected FacingDirection facing;
+
         [Tooltip("Use Default Settings")]
-        public bool useDefaultSettings = true;
-        
+        [SerializeField] protected bool useDefaultSettings = true;
+
         [Tooltip("Fade Duration")]
-        public float fadeDuration = 0.5f;
-        
+        [SerializeField] protected float fadeDuration = 0.5f;
+
         [Tooltip("Movement Duration")]
-        public float moveDuration = 1f;
-        
+        [SerializeField] protected float moveDuration = 1f;
+
         [Tooltip("Shift Offset")]
-        public Vector2 shiftOffset;
-        
-        [Tooltip("Move")]
-        public bool move;
-        
-        [Tooltip("Start from offset")]
-        public bool shiftIntoPlace;
-        
+        [SerializeField] protected Vector2 shiftOffset;
+
+        [Tooltip("Move portrait into new position")]
+        [SerializeField] protected bool move;
+
+        [Tooltip("Start from offset position")]
+        [SerializeField] protected bool shiftIntoPlace;
+
         [Tooltip("Wait until the tween has finished before executing the next command")]
-        public bool waitUntilFinished = false;
+        [SerializeField] protected bool waitUntilFinished = false;
+
+        #region Public members
+
+        /// <summary>
+        /// Stage to display portrait on.
+        /// </summary>
+        public virtual Stage _Stage { get { return stage; } set { stage = value; } }
+
+        /// <summary>
+        /// Character to display.
+        /// </summary>
+        public virtual Character _Character { get { return character; } set { character = value; } }
+
+        /// <summary>
+        /// Portrait to display.
+        /// </summary>
+        public virtual Sprite _Portrait { get { return portrait; } set { portrait = value; } }
+
+        /// <summary>
+        /// Move the portrait from/to this offset position.
+        /// </summary>
+        public virtual PositionOffset Offset { get { return offset; } set { offset = value; } }
+
+        /// <summary>
+        /// Move the portrait from this position.
+        /// </summary>
+        public virtual RectTransform FromPosition { get { return fromPosition; } set { fromPosition = value;} }
+
+        /// <summary>
+        /// Move the portrait to this position.
+        /// </summary>
+        public virtual RectTransform ToPosition { get { return toPosition; } set { toPosition = value;} }
+
+        /// <summary>
+        /// Direction character is facing.
+        /// </summary>
+        public virtual FacingDirection Facing { get { return facing; } set { facing = value; } }
+
+        /// <summary>
+        /// Use Default Settings.
+        /// </summary>
+        public virtual bool UseDefaultSettings { get { return useDefaultSettings; } set { useDefaultSettings = value; } }
+
+        /// <summary>
+        /// Move portrait into new position.
+        /// </summary>
+        public virtual bool Move { get { return move; } set { move = value; } }
+
+        /// <summary>
+        /// Start from offset position.
+        /// </summary>
+        public virtual bool ShiftIntoPlace { get { return shiftIntoPlace; } set { shiftIntoPlace = value; } }
 
         public override void OnEnter()
         {
@@ -207,5 +254,7 @@ namespace Fungus
             //Default to display type: show
             display = DisplayType.Show;
         }
+
+        #endregion
     }
 }

@@ -1,14 +1,13 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Deletes a saved value from permanent storage.
+    /// </summary>
     [CommandInfo("Variable", 
                  "Delete Save Key", 
                  "Deletes a saved value from permanent storage.")]
@@ -16,7 +15,9 @@ namespace Fungus
     public class DeleteSaveKey : Command
     {
         [Tooltip("Name of the saved value. Supports variable substition e.g. \"player_{$PlayerNumber}")]
-        public string key = "";
+        [SerializeField] protected string key = "";
+
+        #region Public members
 
         public override void OnEnter()
         {
@@ -26,7 +27,7 @@ namespace Fungus
                 return;
             }
             
-            Flowchart flowchart = GetFlowchart();
+            var flowchart = GetFlowchart();
             
             // Prepend the current save profile (if any)
             string prefsKey = SetSaveProfile.saveProfile + "_" + flowchart.SubstituteVariables(key);
@@ -50,6 +51,7 @@ namespace Fungus
         {
             return new Color32(235, 191, 217, 255);
         }
-    }
-    
+
+        #endregion
+    }    
 }

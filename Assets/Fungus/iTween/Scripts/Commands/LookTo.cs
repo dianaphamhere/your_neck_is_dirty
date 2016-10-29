@@ -1,7 +1,5 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -9,6 +7,9 @@ using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Rotates a GameObject to look at a supplied Transform or Vector3 over time.
+    /// </summary>
     [CommandInfo("iTween", 
                  "Look To", 
                  "Rotates a GameObject to look at a supplied Transform or Vector3 over time.")]
@@ -17,13 +18,15 @@ namespace Fungus
     public class LookTo : iTweenCommand
     {
         [Tooltip("Target transform that the GameObject will look at")]
-        public TransformData _toTransform;
+        [SerializeField] protected TransformData _toTransform;
 
         [Tooltip("Target world position that the GameObject will look at, if no From Transform is set")]
-        public Vector3Data _toPosition;
+        [SerializeField] protected Vector3Data _toPosition;
 
         [Tooltip("Restricts rotation to the supplied axis only")]
-        public iTweenAxis axis;
+        [SerializeField] protected iTweenAxis axis;
+
+        #region Public members
 
         public override void DoTween()
         {
@@ -58,6 +61,8 @@ namespace Fungus
             iTween.LookTo(_targetObject.Value, tweenParams);
         }
 
+        #endregion
+
         #region Backwards compatibility
 
         [HideInInspector] [FormerlySerializedAs("toTransform")] public Transform toTransformOLD;
@@ -82,5 +87,4 @@ namespace Fungus
 
         #endregion
     }
-
 }

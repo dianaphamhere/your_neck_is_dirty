@@ -1,30 +1,26 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEditor;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
-    /**
-     * Temp hidden object which lets us use the entire inspector window to inspect
-     * the block command list.
-     */
+    /// <summary>
+    /// Temp hidden object which lets us use the entire inspector window to inspect the block command list.
+    /// </summary>
     public class BlockInspector : ScriptableObject 
     {
         [FormerlySerializedAs("sequence")]
         public Block block;
     }
 
-    /**
-     * Custom editor for the temp hidden object.
-     */
+    /// <summary>
+    /// Custom editor for the temp hidden object.
+    /// </summary>
     [CustomEditor (typeof(BlockInspector), true)]
     public class BlockInspectorEditor : Editor
     {
@@ -74,17 +70,21 @@ namespace Fungus
         public override void OnInspectorGUI () 
         {
             BlockInspector blockInspector = target as BlockInspector;
-            Block block = blockInspector.block;
+            if (blockInspector.block == null)
+            {
+                return;
+            }
 
+            var block = blockInspector.block;
             if (block == null)
             {
                 return;
             }
 
-            Flowchart flowchart = block.GetFlowchart();
+            var flowchart = (Flowchart)block.GetFlowchart();
 
             if (activeBlockEditor == null ||
-                block != activeBlockEditor.target)
+                !block.Equals(activeBlockEditor.target))
             {
                 DestroyImmediate(activeBlockEditor);
                 activeBlockEditor = Editor.CreateEditor(block) as BlockEditor;
@@ -101,19 +101,19 @@ namespace Fungus
             Rect blockRect = new Rect(5, topPanelHeight, width - 5, height + 10);
             GUILayout.BeginArea(blockRect);
 
-            blockScrollPos = GUILayout.BeginScrollView(blockScrollPos, GUILayout.Height(flowchart.blockViewHeight));
+            blockScrollPos = GUILayout.BeginScrollView(blockScrollPos, GUILayout.Height(flowchart.BlockViewHeight));
             activeBlockEditor.DrawBlockGUI(flowchart);
             GUILayout.EndScrollView();
 
             Command inspectCommand = null;
-            if (flowchart.selectedCommands.Count == 1)
+            if (flowchart.SelectedCommands.Count == 1)
             {
-                inspectCommand = flowchart.selectedCommands[0];
+                inspectCommand = flowchart.SelectedCommands[0];
             }
 
             if (Application.isPlaying &&
                 inspectCommand != null &&
-                inspectCommand.parentBlock != block)
+                !inspectCommand.ParentBlock.Equals(block))
             {
                 GUILayout.EndArea();
                 Repaint();
@@ -160,10 +160,10 @@ namespace Fungus
             if (inspectCommand != null)
             {
                 if (activeCommandEditor == null || 
-                    inspectCommand != activeCommandEditor.target)
+                    !inspectCommand.Equals(activeCommandEditor.target))
                 {
                     // See if we have a cached version of the command editor already,
-                    var editors = (from e in cachedCommandEditors where (e != null && e.target == inspectCommand) select e);
+                    var editors = (from e in cachedCommandEditors where (e != null && (e.target.Equals(inspectCommand))) select e);
 
                     if (editors.Count() > 0)
                     {
@@ -173,7 +173,7 @@ namespace Fungus
                     else
                     {
                         // No cached editor, so create a new one.
-                        activeCommandEditor = Editor.CreateEditor(inspectCommand) as CommandEditor;
+                        activeCommandEditor = Editor.CreateEditor((Command)inspectCommand) as CommandEditor;
                         cachedCommandEditors.Add(activeCommandEditor);
                     }
                 }
@@ -189,7 +189,7 @@ namespace Fungus
 
             // Draw the resize bar after everything else has finished drawing
             // This is mainly to avoid incorrect indenting.
-            Rect resizeRect = new Rect(0, topPanelHeight + flowchart.blockViewHeight + 1, Screen.width, 4f);
+            Rect resizeRect = new Rect(0, topPanelHeight + flowchart.BlockViewHeight + 1, Screen.width, 4f);
             GUI.color = new Color(0.64f, 0.64f, 0.64f);
             GUI.DrawTexture(resizeRect, EditorGUIUtility.whiteTexture);
             resizeRect.height = 1;
@@ -204,7 +204,7 @@ namespace Fungus
 
         private void ResizeScrollView(Flowchart flowchart)
         {
-            Rect cursorChangeRect = new Rect(0, flowchart.blockViewHeight + 1, Screen.width, 4f);
+            Rect cursorChangeRect = new Rect(0, flowchart.BlockViewHeight + 1, Screen.width, 4f);
 
             EditorGUIUtility.AddCursorRect(cursorChangeRect, MouseCursor.ResizeVertical);
             
@@ -216,7 +216,7 @@ namespace Fungus
             if (resize)
             {
                 Undo.RecordObject(flowchart, "Resize view");
-                flowchart.blockViewHeight = Event.current.mousePosition.y;
+                flowchart.BlockViewHeight = Event.current.mousePosition.y;
             }
             
             ClampBlockViewHeight(flowchart);
@@ -251,10 +251,10 @@ namespace Fungus
             if (clamp)
             {
                 // Make sure block view is always clamped to visible area
-                float height = flowchart.blockViewHeight;
+                float height = flowchart.BlockViewHeight;
                 height = Mathf.Max(200, height);
                 height = Mathf.Min(Screen.height - 200,height);
-                flowchart.blockViewHeight = height;
+                flowchart.BlockViewHeight = height;
             }
             
             if (Event.current.type == EventType.Repaint)
@@ -263,5 +263,4 @@ namespace Fungus
             }
         }
     }
-
 }

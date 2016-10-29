@@ -1,15 +1,14 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Sets a game object in the scene to be active / inactive.
+    /// </summary>
     [CommandInfo("Scripting", 
                  "Set Active", 
                  "Sets a game object in the scene to be active / inactive.")]
@@ -18,11 +17,13 @@ namespace Fungus
     public class SetActive : Command
     {
         [Tooltip("Reference to game object to enable / disable")]
-        public GameObjectData _targetGameObject;
+        [SerializeField] protected GameObjectData _targetGameObject;
 
         [Tooltip("Set to true to enable the game object")]
-        public BooleanData activeState;
+        [SerializeField] protected BooleanData activeState;
     
+        #region Public members
+
         public override void OnEnter()
         {
             if (_targetGameObject.Value != null)
@@ -48,6 +49,8 @@ namespace Fungus
             return new Color32(235, 191, 217, 255);
         }
 
+        #endregion
+
         #region Backwards compatibility
 
         [HideInInspector] [FormerlySerializedAs("targetGameObject")] public GameObject targetGameObjectOLD;
@@ -63,5 +66,4 @@ namespace Fungus
 
         #endregion
     }
-
 }

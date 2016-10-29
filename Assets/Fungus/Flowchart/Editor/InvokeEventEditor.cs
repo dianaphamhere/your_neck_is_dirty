@@ -1,14 +1,9 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEditor;
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
-namespace Fungus
+namespace Fungus.EditorUtils
 {
     [CustomEditor (typeof(InvokeEvent))]
     public class InvokeEventEditor : CommandEditor 
@@ -50,24 +45,24 @@ namespace Fungus
             EditorGUILayout.PropertyField(delayProp);
             EditorGUILayout.PropertyField(invokeTypeProp);
 
-            switch ((InvokeEvent.InvokeType)invokeTypeProp.enumValueIndex)
+            switch ((InvokeType)invokeTypeProp.enumValueIndex)
             {
-            case InvokeEvent.InvokeType.Static:
+            case InvokeType.Static:
                 EditorGUILayout.PropertyField(staticEventProp);
                 break;
-            case InvokeEvent.InvokeType.DynamicBoolean:
+            case InvokeType.DynamicBoolean:
                 EditorGUILayout.PropertyField(booleanEventProp);
                 EditorGUILayout.PropertyField(booleanParameterProp);
                 break;
-            case InvokeEvent.InvokeType.DynamicInteger:
+            case InvokeType.DynamicInteger:
                 EditorGUILayout.PropertyField(integerEventProp);
                 EditorGUILayout.PropertyField(integerParameterProp);
                 break;
-            case InvokeEvent.InvokeType.DynamicFloat:
+            case InvokeType.DynamicFloat:
                 EditorGUILayout.PropertyField(floatEventProp);
                 EditorGUILayout.PropertyField(floatParameterProp);
                 break;
-            case InvokeEvent.InvokeType.DynamicString:
+            case InvokeType.DynamicString:
                 EditorGUILayout.PropertyField(stringEventProp);
                 EditorGUILayout.PropertyField(stringParameterProp);
                 break;

@@ -1,47 +1,49 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Fungus
 {
-    /*
-     * Manages audio effects for Dialogs
-     */
+    /// <summary>
+    /// Type of audio effect to play.
+    /// </summary>
+    public enum AudioMode
+    {
+        /// <summary> Use short beep sound effects. </summary>
+        Beeps,
+        /// <summary> Use long looping sound effect. </summary>
+        SoundEffect,
+    }
+
+    /// <summary>
+    /// Manages audio effects for Dialogs.
+    /// </summary>
     public class WriterAudio : MonoBehaviour, IWriterListener
     {
         [Tooltip("Volume level of writing sound effects")]
         [Range(0,1)]
-        public float volume = 1f;
+        [SerializeField] protected float volume = 1f;
 
         [Tooltip("Loop the audio when in Sound Effect mode. Has no effect in Beeps mode.")]
-        public bool loop = true;
+        [SerializeField] protected bool loop = true;
 
         // If none is specifed then we use any AudioSource on the gameobject, and if that doesn't exist we create one.
         [Tooltip("AudioSource to use for playing sound effects. If none is selected then one will be created.")]
-        public AudioSource targetAudioSource;
-
-        public enum AudioMode
-        {
-            Beeps,          // Use short beep sound effects
-            SoundEffect,    // Use long looping sound effect
-        }
+        [SerializeField] protected AudioSource targetAudioSource;
 
         [Tooltip("Type of sound effect to play when writing text")]
-        public AudioMode audioMode = AudioMode.Beeps;
+        [SerializeField] protected AudioMode audioMode = AudioMode.Beeps;
 
         [Tooltip("List of beeps to randomly select when playing beep sound effects. Will play maximum of one beep per character, with only one beep playing at a time.")]
-        public List<AudioClip> beepSounds = new List<AudioClip>();
+        [SerializeField] protected List<AudioClip> beepSounds = new List<AudioClip>();
 
         [Tooltip("Long playing sound effect to play when writing text")]
-        public AudioClip soundEffect;
+        [SerializeField] protected AudioClip soundEffect;
 
         [Tooltip("Sound effect to play on user input (e.g. a click)")]
-        public AudioClip inputSound;
+        [SerializeField] protected AudioClip inputSound;
 
         protected float targetVolume = 0f;
 
@@ -54,7 +56,7 @@ namespace Fungus
         // Time when current beep will have finished playing
         protected float nextBeepTime;
 
-        public virtual void SetAudioMode(AudioMode mode)
+        protected virtual void SetAudioMode(AudioMode mode)
         {
             audioMode = mode;
         }
@@ -74,29 +76,7 @@ namespace Fungus
             targetAudioSource.volume = 0f;
         }
 
-        /**
-         * Plays a voiceover audio clip.
-         * Voiceover behaves differently than speaking sound effects because it 
-         * should keep on playing after the text has finished writing. It also
-         * does not pause for wait tags, punctuation, etc.
-         */
-        public virtual void PlayVoiceover(AudioClip voiceOverClip)
-        {
-            if (targetAudioSource == null)
-            {
-                return;
-            }
-
-            playingVoiceover = true;
-
-            targetAudioSource.volume = volume;
-            targetVolume = volume;
-            targetAudioSource.loop = false;
-            targetAudioSource.clip = voiceOverClip;
-            targetAudioSource.Play();
-        }
-
-        public virtual void Play(AudioClip audioClip)
+        protected virtual void Play(AudioClip audioClip)
         {
             if (targetAudioSource == null ||
                 (audioMode == AudioMode.SoundEffect && soundEffect == null && audioClip == null) ||
@@ -133,7 +113,7 @@ namespace Fungus
             }
         }
 
-        public virtual void Pause()
+        protected virtual void Pause()
         {
             if (targetAudioSource == null)
             {
@@ -144,7 +124,7 @@ namespace Fungus
             targetVolume = 0f;
         }
 
-        public virtual void Stop()
+        protected virtual void Stop()
         {
             if (targetAudioSource == null)
             {
@@ -159,7 +139,7 @@ namespace Fungus
             playingVoiceover = false;
         }
 
-        public virtual void Resume()
+        protected virtual void Resume()
         {
             if (targetAudioSource == null)
             {
@@ -174,9 +154,7 @@ namespace Fungus
             targetAudioSource.volume = Mathf.MoveTowards(targetAudioSource.volume, targetVolume, Time.deltaTime * 5f);
         }
 
-        //
-        // IWriterListener implementation
-        //
+        #region IWriterListener implementation
 
         public virtual void OnInput()
         {
@@ -250,6 +228,23 @@ namespace Fungus
                 }
             }
         }
-    }
 
+        public virtual void OnVoiceover(AudioClip voiceOverClip)
+        {
+            if (targetAudioSource == null)
+            {
+                return;
+            }
+
+            playingVoiceover = true;
+
+            targetAudioSource.volume = volume;
+            targetVolume = volume;
+            targetAudioSource.loop = false;
+            targetAudioSource.clip = voiceOverClip;
+            targetAudioSource.Play();
+        }
+            
+        #endregion
+    }
 }

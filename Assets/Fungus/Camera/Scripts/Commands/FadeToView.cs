@@ -1,14 +1,13 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// Fades the camera out and in again at a position specified by a View object.
+    /// </summary>
     [CommandInfo("Camera", 
                  "Fade To View", 
                  "Fades the camera out and in again at a position specified by a View object.")]
@@ -16,25 +15,30 @@ namespace Fungus
     public class FadeToView : Command 
     {
         [Tooltip("Time for fade effect to complete")]
-        public float duration = 1f;
+        [SerializeField] protected float duration = 1f;
 
         [Tooltip("Fade from fully visible to opaque at start of fade")]
-        public bool fadeOut = true;
+        [SerializeField] protected bool fadeOut = true;
 
         [Tooltip("View to transition to when Fade is complete")]
-        public View targetView;
+        [SerializeField] protected View targetView;
 
         [Tooltip("Wait until the fade has finished before executing next command")]
-        public bool waitUntilFinished = true;
+        [SerializeField] protected bool waitUntilFinished = true;
 
         [Tooltip("Color to render fullscreen fade texture with when screen is obscured.")]
-        public Color fadeColor = Color.black;
+        [SerializeField] protected Color fadeColor = Color.black;
 
         [Tooltip("Optional texture to use when rendering the fullscreen fade effect.")]
-        public Texture2D fadeTexture;
+        [SerializeField] protected Texture2D fadeTexture;
 
         [Tooltip("Camera to use for the fade. Will use main camera if set to none.")]
-        public Camera targetCamera;
+        [SerializeField] protected Camera targetCamera;
+
+        protected virtual void Start()
+        {
+            AcquireCamera();
+        }
 
         protected virtual void AcquireCamera()
         {
@@ -50,10 +54,12 @@ namespace Fungus
             }
         }
 
-        public virtual void Start()
-        {
-            AcquireCamera();
-        }
+        #region Public members
+
+        /// <summary>
+        /// View to transition to when Fade is complete
+        /// </summary>
+        public virtual View TargetView { get { return targetView; } }
 
         public override void OnEnter()
         {
@@ -65,26 +71,20 @@ namespace Fungus
                 return;
             }
 
-            CameraController cameraController = CameraController.GetInstance();
-
-            if (waitUntilFinished)
-            {
-                cameraController.waiting = true;
-            }
+            var cameraManager = FungusManager.Instance.CameraManager;
 
             if (fadeTexture)
             {
-                cameraController.screenFadeTexture = fadeTexture;
+                cameraManager.ScreenFadeTexture = fadeTexture;
             }
             else
             {
-                cameraController.screenFadeTexture = CameraController.CreateColorTexture(fadeColor, 32, 32);
+                cameraManager.ScreenFadeTexture = CameraManager.CreateColorTexture(fadeColor, 32, 32);
             }
 
-            cameraController.FadeToView(targetCamera, targetView, duration, fadeOut, delegate { 
+            cameraManager.FadeToView(targetCamera, targetView, duration, fadeOut, delegate { 
                 if (waitUntilFinished)
                 {
-                    cameraController.waiting = false;
                     Continue();
                 }
             });
@@ -97,7 +97,9 @@ namespace Fungus
 
         public override void OnStopExecuting()
         {
-            CameraController.GetInstance().StopAllCoroutines();
+            var cameraManager = FungusManager.Instance.CameraManager;
+
+            cameraManager.Stop();
         }
 
         public override string GetSummary()
@@ -116,6 +118,7 @@ namespace Fungus
         {
             return new Color32(216, 228, 170, 255);
         }
-    }
 
+        #endregion
+    }
 }

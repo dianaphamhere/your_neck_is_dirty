@@ -1,18 +1,18 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
-using UnityEngine;
-using System.IO;
-using System.Collections;
 using System.Text;
 using System;
 
 namespace Fungus
 {
-    public class StringFormatter
+    /// <summary>
+    /// Misc string formatting functions.
+    /// </summary>
+    public static class StringFormatter
     {
+        #region Public members
+
         public static string[] FormatEnumNames(Enum e, string firstLabel)
         {
             string[] enumLabels = Enum.GetNames(e.GetType());
@@ -58,6 +58,7 @@ namespace Fungus
             }
             return true;
         }
-    }
-    
+
+        #endregion
+    }    
 }

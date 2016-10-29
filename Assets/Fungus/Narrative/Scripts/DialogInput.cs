@@ -1,40 +1,42 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
-using System.Collections;
 
 namespace Fungus
 {
-    public interface IDialogInputListener
+    /// <summary>
+    /// Supported modes for clicking through a Say Dialog.
+    /// </summary>
+    public enum ClickMode
     {
-        void OnNextLineEvent();
+        /// <summary> Clicking disabled. </summary>
+        Disabled,
+        /// <summary> Click anywhere on screen to advance. </summary>
+        ClickAnywhere,
+        /// <summary> Click anywhere on Say Dialog to advance. </summary>
+        ClickOnDialog,
+        /// <summary> Click on continue button to advance. </summary>
+        ClickOnButton
     }
-    
+
+    /// <summary>
+    /// Input handler for say dialogs.
+    /// </summary>
     public class DialogInput : MonoBehaviour
     {
-        public enum ClickMode
-        {
-            Disabled,           // Clicking disabled
-            ClickAnywhere,      // Click anywhere on screen to advance
-            ClickOnDialog,      // Click anywhere on Say Dialog to advance
-            ClickOnButton       // Click on continue button to advance
-        }
-
         [Tooltip("Click to advance story")]
-        public ClickMode clickMode;
+        [SerializeField] protected ClickMode clickMode;
 
         [Tooltip("Delay between consecutive clicks. Useful to prevent accidentally clicking through story.")]
-        public float nextClickDelay = 0f;
+        [SerializeField] protected float nextClickDelay = 0f;
 
         [Tooltip("Allow holding Cancel to fast forward text")]
-        public bool cancelEnabled = true;
+        [SerializeField] protected bool cancelEnabled = true;
 
         [Tooltip("Ignore input if a Menu dialog is currently active")]
-        public bool ignoreMenuClicks = true;
+        [SerializeField] protected bool ignoreMenuClicks = true;
 
         protected bool dialogClickedFlag;
 
@@ -44,40 +46,11 @@ namespace Fungus
 
         protected StandaloneInputModule currentStandaloneInputModule;
 
-        /**
-         * Trigger next line input event from script.
-         */
-        public void SetNextLineFlag()
-        {
-            nextLineInputFlag = true;
-        }
+        protected Writer writer;
 
-        /**
-         * Set the dialog clicked flag (usually from an Event Trigger component in the dialog UI)
-         */
-        public void SetDialogClickedFlag()
+        protected virtual void Awake()
         {
-            // Ignore repeat clicks for a short time to prevent accidentally clicking through the character dialogue
-            if (ignoreClickTimer > 0f)
-            {
-                return;
-            }
-            ignoreClickTimer = nextClickDelay;
-
-            // Only applies in Click On Dialog mode
-            if (clickMode == ClickMode.ClickOnDialog)
-            {
-                dialogClickedFlag = true;
-            }
-        }
-
-        public void SetButtonClickedFlag()
-        {
-            // Only applies if clicking is not disabled
-            if (clickMode != ClickMode.Disabled)
-            {
-                SetNextLineFlag();
-            }
+            writer = GetComponent<Writer>();
         }
 
         protected virtual void Update()
@@ -92,7 +65,7 @@ namespace Fungus
                 if (EventSystem.current == null)
                 {
                     // Auto spawn an Event System from the prefab
-                    GameObject prefab = Resources.Load<GameObject>("EventSystem");
+                    GameObject prefab = Resources.Load<GameObject>("Prefabs/EventSystem");
                     if (prefab != null)
                     {
                         GameObject go = Instantiate(prefab) as GameObject;
@@ -103,10 +76,13 @@ namespace Fungus
                 currentStandaloneInputModule = EventSystem.current.GetComponent<StandaloneInputModule>();
             }
 
-            if (Input.GetButtonDown(currentStandaloneInputModule.submitButton) ||
-                (cancelEnabled && Input.GetButton(currentStandaloneInputModule.cancelButton)))
+            if (writer != null && writer.IsWriting)
             {
-                SetNextLineFlag();
+                if (Input.GetButtonDown(currentStandaloneInputModule.submitButton) ||
+                    (cancelEnabled && Input.GetButton(currentStandaloneInputModule.cancelButton)))
+                {
+                    SetNextLineFlag();
+                }
             }
 
             switch (clickMode)
@@ -136,9 +112,9 @@ namespace Fungus
             if (ignoreMenuClicks)
             {
                 // Ignore input events if a Menu is being displayed
-                if (MenuDialog.activeMenuDialog != null && 
-                    MenuDialog.activeMenuDialog.gameObject.activeInHierarchy &&
-                    MenuDialog.activeMenuDialog.DisplayedOptionsCount > 0)
+                if (MenuDialog.ActiveMenuDialog != null && 
+                    MenuDialog.ActiveMenuDialog.IsActive() &&
+                    MenuDialog.ActiveMenuDialog.DisplayedOptionsCount > 0)
                 {
                     dialogClickedFlag = false;
                     nextLineInputFlag = false;
@@ -148,15 +124,57 @@ namespace Fungus
             // Tell any listeners to move to the next line
             if (nextLineInputFlag)
             {
-                IDialogInputListener[] inputListeners = gameObject.GetComponentsInChildren<IDialogInputListener>();
-                foreach (IDialogInputListener inputListener in inputListeners)
+                var inputListeners = gameObject.GetComponentsInChildren<IDialogInputListener>();
+                for (int i = 0; i < inputListeners.Length; i++)
                 {
+                    var inputListener = inputListeners[i];
                     inputListener.OnNextLineEvent();
                 }
                 nextLineInputFlag = false;
             }
         }
-    }
 
+        #region Public members
+
+        /// <summary>
+        /// Trigger next line input event from script.
+        /// </summary>
+        public virtual void SetNextLineFlag()
+        {
+            nextLineInputFlag = true;
+        }
+
+        /// <summary>
+        /// Set the dialog clicked flag (usually from an Event Trigger component in the dialog UI).
+        /// </summary>
+        public virtual void SetDialogClickedFlag()
+        {
+            // Ignore repeat clicks for a short time to prevent accidentally clicking through the character dialogue
+            if (ignoreClickTimer > 0f)
+            {
+                return;
+            }
+            ignoreClickTimer = nextClickDelay;
+
+            // Only applies in Click On Dialog mode
+            if (clickMode == ClickMode.ClickOnDialog)
+            {
+                dialogClickedFlag = true;
+            }
+        }
+
+        /// <summary>
+        /// Sets the button clicked flag.
+        /// </summary>
+        public virtual void SetButtonClickedFlag()
+        {
+            // Only applies if clicking is not disabled
+            if (clickMode != ClickMode.Disabled)
+            {
+                SetNextLineFlag();
+            }
+        }
+
+        #endregion
+    }
 }
-    

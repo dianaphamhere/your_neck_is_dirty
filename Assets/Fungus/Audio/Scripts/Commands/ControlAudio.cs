@@ -1,7 +1,5 @@
-/**
- * This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
- * It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
- */
+// This code is part of the Fungus library (http://fungusgames.com) maintained by Chris Gregan (http://twitter.com/gofungus).
+// It is released for free under the MIT open source license (https://github.com/snozbot/fungus/blob/master/LICENSE)
 
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -9,85 +7,56 @@ using System.Collections;
 
 namespace Fungus
 {
+    /// <summary>
+    /// The type of audio control to perform.
+    /// </summary>
+    public enum ControlAudioType
+    {
+        /// <summary> Play the audiosource once. </summary>
+        PlayOnce,
+        /// <summary> Play the audiosource in a loop. </summary>
+        PlayLoop,
+        /// <summary> Pause a looping audiosource. </summary>
+        PauseLoop,
+        /// <summary> Stop a looping audiosource. </summary>
+        StopLoop,
+        /// <summary> Change the volume level of an audiosource. </summary>
+        ChangeVolume
+    }
+
+    /// <summary>
+    /// Plays, loops, or stops an audiosource. Any AudioSources with the same tag as the target Audio Source will automatically be stoped.
+    /// </summary>
     [CommandInfo("Audio", 
                  "Control Audio",
                  "Plays, loops, or stops an audiosource. Any AudioSources with the same tag as the target Audio Source will automatically be stoped.")]
     [ExecuteInEditMode]
     public class ControlAudio : Command
     {
-        public enum controlType
-        {
-            PlayOnce,
-            PlayLoop,
-            PauseLoop,
-            StopLoop,
-            ChangeVolume
-        }
-
         [Tooltip("What to do to audio")]
-        public controlType control;
+        [SerializeField] protected ControlAudioType control;
+        public virtual ControlAudioType Control { get { return control; } }
 
         [Tooltip("Audio clip to play")]
-        public AudioSourceData _audioSource;
+        [SerializeField] protected AudioSourceData _audioSource;
 
         [Range(0,1)]
         [Tooltip("Start audio at this volume")]
-        public float startVolume = 1;
+        [SerializeField] protected float startVolume = 1;
 
         [Range(0,1)]
         [Tooltip("End audio at this volume")]
-        public float endVolume = 1;
+        [SerializeField] protected float endVolume = 1;
         
         [Tooltip("Time to fade between current volume level and target volume level.")]
-        public float fadeDuration; 
+        [SerializeField] protected float fadeDuration; 
 
         [Tooltip("Wait until this command has finished before executing the next command.")]
-        public bool waitUntilFinished = false;
-        
-        public override void OnEnter()
-        {
-            if (_audioSource.Value == null)
-            {
-                Continue();
-                return;
-            }
+        [SerializeField] protected bool waitUntilFinished = false;
 
-            if (control != controlType.ChangeVolume)
-            {
-                _audioSource.Value.volume = endVolume;
-            }
-
-            switch(control)
-            {
-                case controlType.PlayOnce:
-                    StopAudioWithSameTag();
-                    PlayOnce();
-                    break;
-                case controlType.PlayLoop:
-                    StopAudioWithSameTag();
-                    PlayLoop();
-                    break;
-                case controlType.PauseLoop:
-                    PauseLoop();
-                    break;
-                case controlType.StopLoop:
-                    StopLoop(_audioSource.Value);
-                    break;
-                case controlType.ChangeVolume:
-                    ChangeVolume(); 
-                    break;
-            }
-            if (!waitUntilFinished)
-            {
-                Continue();
-            }
-        }
-
-        /**
-         * If there's other music playing in the scene, assign it the same tag as the new music you want to play and
-         * the old music will be automatically stopped.
-         */
-        protected void StopAudioWithSameTag()
+        // If there's other music playing in the scene, assign it the same tag as the new music you want to play and
+        // the old music will be automatically stopped.
+        protected virtual void StopAudioWithSameTag()
         {
             // Don't stop audio if there's no tag assigned
             if (_audioSource.Value == null ||
@@ -96,25 +65,26 @@ namespace Fungus
                 return;
             }
 
-            AudioSource[] audioSources = GameObject.FindObjectsOfType<AudioSource>();
-            foreach (AudioSource a in audioSources)
+            var audioSources = GameObject.FindObjectsOfType<AudioSource>();
+            for (int i = 0; i < audioSources.Length; i++)
             {
-                if ((a.GetComponent<AudioSource>() != _audioSource.Value) && (a.tag == _audioSource.Value.tag))
+                var a = audioSources[i];
+                if (a != _audioSource.Value && a.tag == _audioSource.Value.tag)
                 {
-                    StopLoop(a.GetComponent<AudioSource>());
+                    StopLoop(a);
                 }
             }
         }
 
-        protected void PlayOnce() 
+        protected virtual void PlayOnce() 
         {
             if (fadeDuration > 0)
             {
                 // Fade volume in
                 LeanTween.value(_audioSource.Value.gameObject, 
-                                _audioSource.Value.volume, 
-                                endVolume,
-                                fadeDuration
+                    _audioSource.Value.volume, 
+                    endVolume,
+                    fadeDuration
                 ).setOnUpdate(
                     (float updateVolume)=>{
                     _audioSource.Value.volume = updateVolume;
@@ -141,7 +111,7 @@ namespace Fungus
             Continue();
         }
 
-        protected void PlayLoop()
+        protected virtual void PlayLoop()
         {
             if (fadeDuration > 0)
             {
@@ -170,7 +140,7 @@ namespace Fungus
             }
         }
 
-        protected void PauseLoop()
+        protected virtual void PauseLoop()
         {
             if (fadeDuration > 0)
             {
@@ -181,7 +151,7 @@ namespace Fungus
                 }
                 ).setOnComplete(
                     ()=>{
-                    
+
                     _audioSource.Value.GetComponent<AudioSource>().Pause();
                     if (waitUntilFinished)
                     {
@@ -196,7 +166,7 @@ namespace Fungus
             }
         }
 
-        protected void StopLoop(AudioSource source)
+        protected virtual void StopLoop(AudioSource source)
         {
             if (fadeDuration > 0)
             {
@@ -207,7 +177,7 @@ namespace Fungus
                 }
                 ).setOnComplete(
                     ()=>{
-                    
+
                     source.GetComponent<AudioSource>().Stop();
                     if (waitUntilFinished)
                     {
@@ -222,7 +192,7 @@ namespace Fungus
             }
         }
 
-        protected void ChangeVolume()
+        protected virtual void ChangeVolume()
         {
             LeanTween.value(_audioSource.Value.gameObject,_audioSource.Value.volume,endVolume,fadeDuration
             ).setOnUpdate(
@@ -237,9 +207,50 @@ namespace Fungus
             });
         }
 
-        void AudioFinished()
+        protected virtual void AudioFinished()
         {
             if (waitUntilFinished)
+            {
+                Continue();
+            }
+        }
+
+        #region Public members
+
+        public override void OnEnter()
+        {
+            if (_audioSource.Value == null)
+            {
+                Continue();
+                return;
+            }
+
+            if (control != ControlAudioType.ChangeVolume)
+            {
+                _audioSource.Value.volume = endVolume;
+            }
+
+            switch(control)
+            {
+                case ControlAudioType.PlayOnce:
+                    StopAudioWithSameTag();
+                    PlayOnce();
+                    break;
+                case ControlAudioType.PlayLoop:
+                    StopAudioWithSameTag();
+                    PlayLoop();
+                    break;
+                case ControlAudioType.PauseLoop:
+                    PauseLoop();
+                    break;
+                case ControlAudioType.StopLoop:
+                    StopLoop(_audioSource.Value);
+                    break;
+                case ControlAudioType.ChangeVolume:
+                    ChangeVolume(); 
+                    break;
+            }
+            if (!waitUntilFinished)
             {
                 Continue();
             }
@@ -255,11 +266,11 @@ namespace Fungus
             if (fadeDuration > 0)
             {
                 fadeType = " Fade out";
-                if (control != controlType.StopLoop)
+                if (control != ControlAudioType.StopLoop)
                 {
                     fadeType = " Fade in volume to " + endVolume;
                 }
-                if (control == controlType.ChangeVolume)
+                if (control == ControlAudioType.ChangeVolume)
                 {
                     fadeType = " to " + endVolume;
                 }
@@ -272,6 +283,8 @@ namespace Fungus
         {
             return new Color32(242, 209, 176, 255);
         }
+
+        #endregion
 
         #region Backwards compatibility
 
@@ -287,6 +300,5 @@ namespace Fungus
         }
 
         #endregion
-    }
-    
+    }    
 }
