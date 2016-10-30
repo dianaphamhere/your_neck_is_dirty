@@ -4,5 +4,7 @@ The "Repressed Memory Collection" is quite literally, a collection of repressed 
 
 **Project:** Your Neck is Dirty  
 **Start:** October 20, 2016  
+**Finished:** October 30, 2016  
 **Medium:** Game  
-**Tools:** Unity 3d, Fungus, Photoshop, Pen, Paper  
+**Tools:** Unity 3d, Fungus, Photoshop, Pen, Paper
+
