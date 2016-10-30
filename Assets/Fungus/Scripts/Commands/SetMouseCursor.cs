@@ -29,12 +29,12 @@ namespace Fungus
         public static void ResetMouseCursor()
         {
             // Change mouse cursor back to most recent settings
-            Cursor.SetCursor(activeCursorTexture, activeHotspot, CursorMode.Auto);
+			Cursor.SetCursor(activeCursorTexture, activeHotspot, CursorMode.ForceSoftware);
         }
 
         public override void OnEnter()
         {
-            Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
+			Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.ForceSoftware);
 
             activeCursorTexture = cursorTexture;
             activeHotspot = hotSpot;
